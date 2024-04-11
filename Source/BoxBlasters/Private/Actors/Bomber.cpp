@@ -18,17 +18,7 @@ void ABomber::BeginPlay()
 	
 }
 
-void ABomber::Tick(const float DeltaTime)
+FTile ABomber::GetCurrentTile() const
 {
-	Super::Tick(DeltaTime);
-}
-
-void ABomber::SetArena(AArena* InArena)
-{
-	Arena = InArena;
-}
-
-void ABomber::SetIndex(const int32 InIndex)
-{
-	Index = InIndex;
+	return LocationTile(GetActorLocation());
 }

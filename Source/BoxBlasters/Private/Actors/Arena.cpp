@@ -26,6 +26,22 @@ TArray<FTransform> GetBorder()
 	return Border;
 }
 
+TArray<FTransform> GetWalls()
+{
+	TArray<FTransform> Walls;
+	for (int i = 0; i < GX; ++i)
+	{
+		for (int j = 0; j < GY; ++j)
+		{
+			if (i % 2 == 1 && j % 2 == 1)
+			{
+				Walls.Emplace(FTile{i, j}.Location());
+			}
+		}
+	}
+	return Walls;
+}
+
 AArena::AArena()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -54,5 +70,6 @@ void AArena::OnConstruction(const FTransform& Transform)
 		BaseComponent->ClearInstances();
 		BaseComponent->AddInstances(GetFloor(), false);
 		BaseComponent->AddInstances(GetBorder(), false);
+		BaseComponent->AddInstances(GetWalls(), false);
 	}
 }
