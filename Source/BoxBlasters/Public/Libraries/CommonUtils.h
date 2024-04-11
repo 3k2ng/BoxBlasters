@@ -12,8 +12,8 @@
 constexpr float GTileSize = 100.F;
 
 // grid size
-constexpr int32 GX = 5;
-constexpr int32 GY = 5;
+constexpr int32 GX = 15;
+constexpr int32 GY = 15;
 constexpr int32 GTotal = GX * GY;
 
 // offset of the (0, 0) tile from the origin of the arena

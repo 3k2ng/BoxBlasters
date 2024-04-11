@@ -1,4 +1,4 @@
-#include "Arena.h"
+#include "Actors/Arena.h"
 
 TArray<FTransform> GetFloor()
 {
@@ -30,10 +30,10 @@ AArena::AArena()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	PrimaryActorTick.bStartWithTickEnabled = false;
-	BaseMeshInstance = CreateDefaultSubobject<UInstancedStaticMeshComponent>("base");
-	SetRootComponent(BaseMeshInstance);
-	BaseMeshInstance->SetMobility(EComponentMobility::Static);
-	BaseMeshInstance->SetCollisionProfileName("BlockAll");
+	BaseComponent = CreateDefaultSubobject<UInstancedStaticMeshComponent>("InstancedBaseMesh");
+	SetRootComponent(BaseComponent);
+	BaseComponent->SetMobility(EComponentMobility::Static);
+	BaseComponent->SetCollisionProfileName("BlockAll");
 }
 
 void AArena::BeginPlay()
@@ -45,14 +45,14 @@ void AArena::BeginPlay()
 void AArena::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-	if (IsValid(BaseMesh) && !IsValid(BaseMeshInstance->GetStaticMesh()))
+	if (IsValid(BaseMesh) && !IsValid(BaseComponent->GetStaticMesh()))
 	{
-		BaseMeshInstance->SetStaticMesh(BaseMesh);
+		BaseComponent->SetStaticMesh(BaseMesh);
 	}
-	if (IsValid(BaseMeshInstance->GetStaticMesh()))
+	if (IsValid(BaseComponent->GetStaticMesh()))
 	{
-		BaseMeshInstance->ClearInstances();
-		BaseMeshInstance->AddInstances(GetFloor(), false);
-		BaseMeshInstance->AddInstances(GetBorder(), false);
+		BaseComponent->ClearInstances();
+		BaseComponent->AddInstances(GetFloor(), false);
+		BaseComponent->AddInstances(GetBorder(), false);
 	}
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CommonUtils.h"
+#include "Libraries/CommonUtils.h"
 #include "GameFramework/Actor.h"
 #include "Arena.generated.h"
 
@@ -10,7 +10,7 @@ class BOXBLASTERS_API AArena : public AActor
 {
 	GENERATED_BODY()
 	UPROPERTY()
-	UInstancedStaticMeshComponent* BaseMeshInstance;
+	UInstancedStaticMeshComponent* BaseComponent;
 	
 public:	
 	AArena();
