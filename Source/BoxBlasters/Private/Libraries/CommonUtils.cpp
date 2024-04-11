@@ -18,3 +18,29 @@ FVector FTile::Location() const
 		0
 	};
 }
+
+FTile FTile::Mod() const
+{
+	return {
+		((X % GX) + GX) % GX,
+		((Y % GY) + GY) % GY
+	};
+}
+
+FTile FTile::Clamp() const
+{
+	return {
+		std::max(0, std::min(GX, X)),
+		std::max(0, std::min(GY, Y))
+	};
+}
+
+FVector UCommonUtils::GetTileLocation(const FTile Tile)
+{
+	return Tile.Location();
+}
+
+FTile UCommonUtils::GetLocationTile(const FVector Location)
+{
+	return LocationTile(Location);
+}

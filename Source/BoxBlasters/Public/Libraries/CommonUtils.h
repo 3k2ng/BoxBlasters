@@ -8,12 +8,12 @@
 #define CHECK_VALID(x) checkf(IsValid(x), TEXT("invalid ref"))
 
 // all information regarding the size of the arena are hardcoded
-// this is do reduce dependency on the arena object
+// this is to reduce dependency on the arena object
 constexpr float GTileSize = 100.F;
 
 // grid size
 constexpr int32 GX = 15;
-constexpr int32 GY = 15;
+constexpr int32 GY = 13;
 constexpr int32 GTotal = GX * GY;
 
 // offset of the (0, 0) tile from the origin of the arena
@@ -28,11 +28,17 @@ struct FTile
 	int32 X;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Y;
+	// is the tile inside the grid
 	bool IsValid() const;
 	// canonical index of the tile
 	int32 Index() const;
 	// location of the tile
 	FVector Location() const;
+	// in the case that a tile is not valid, there are two ways to make it valid
+	// modulo its two components with max to shift it back inside the grid
+	FTile Mod() const;
+	// clamp its two components between 0 and max
+	FTile Clamp() const;
 };
 
 // return the tile at the canonical index given
@@ -42,8 +48,26 @@ inline FTile IndexTile(const int32 Index)
 	return {Index % GX, Index / GX};
 }
 
+// return the tile of the location given
+inline FTile LocationTile(const FVector Location)
+{
+	return {
+		static_cast<int32>((Location.X - GOffsetX) / GTileSize),
+		static_cast<int32>((Location.Y - GOffsetY) / GTileSize)
+	};
+}
+
+inline bool operator==(const FTile A, const FTile B)
+{
+	return A.X == B.X && A.Y == B.Y;
+};
+
 UCLASS()
 class BOXBLASTERS_API UCommonUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+	UFUNCTION(BlueprintPure)
+	static FVector GetTileLocation(FTile Tile);
+	UFUNCTION(BlueprintPure)
+	static FTile GetLocationTile(FVector Location);
 };

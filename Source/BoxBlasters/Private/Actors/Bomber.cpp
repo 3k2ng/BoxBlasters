@@ -22,3 +22,13 @@ void ABomber::Tick(const float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
+
+void ABomber::SetArena(AArena* InArena)
+{
+	Arena = InArena;
+}
+
+void ABomber::SetIndex(const int32 InIndex)
+{
+	Index = InIndex;
+}
