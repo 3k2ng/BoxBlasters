@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "CommonUtils.h"
-#include "NavMesh/NavMeshBoundsVolume.h"
 #include "GameFramework/Actor.h"
 #include "Arena.generated.h"
 
@@ -21,4 +20,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnConstruction(const FTransform & Transform) override;
+	
+public:
 };

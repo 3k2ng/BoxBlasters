@@ -28,6 +28,7 @@ struct FTile
 	int32 X;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Y;
+	bool IsValid() const;
 	// canonical index of the tile
 	int32 Index() const;
 	// location of the tile
@@ -37,6 +38,7 @@ struct FTile
 // return the tile at the canonical index given
 inline FTile IndexTile(const int32 Index)
 {
+	checkf(Index >= 0 && Index < GTotal, TEXT("index must be between 0 and %d"), GTotal);
 	return {Index % GX, Index / GX};
 }
 
