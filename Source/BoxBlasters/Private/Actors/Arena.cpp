@@ -63,6 +63,7 @@ AArena::AArena()
 	AreaObjectMap.Init(nullptr, GTotal);
 	AreaStateMap.Init(EAreaState::Normal, GTotal);
 	ExplosionTimerMap.Init(0.F, GTotal);
+	ExplosionMap.Init(false, GTotal);
 	BombTypeMap.Init(EBombType::None, GTotal);
 	BombPowerMap.Init(0, GTotal);
 }
@@ -152,7 +153,7 @@ void AArena::AddBox(const FTile Tile, const ETileType BoxType)
 			FTransform{
 				FRotator{},
 				Tile.Location(),
-				{0.8F, 0.8F, 1.F}
+				FVector{0.8F}
 			}
 		);
 		InstancedBox->SetCustomDataValue(BoxInstanceMap[Tile.Index()], 0, RedValue, true);
@@ -177,9 +178,38 @@ void AArena::Explode(const FTile Tile)
 		const int32 i = Tile.Index();
 		if (TileMap[i] != ETileType::Wall && TileMap[i] != ETileType::Reinforced)
 		{
-			ExplosionTimerMap[i] = 0.5F;
+			ExplosionTimerMap[i] = 0.2F;
+			ExplosionMap[i] = true;
+			AreaStateMap[i] = EAreaState::Blocked;
 		}
 	}
+}
+
+TArray<FTile> AArena::GetBombedTiles(const FTile BombTile, const int32 BombPower)
+{
+	TArray<FTile> BombedTiles;
+	bool Blocked[] = { false, false, false, false };
+	constexpr FTile ToAdd[] = {
+		{0, -1}, {0, 1}, {-1, 0}, {1, 0}
+	};
+	BombedTiles.Add(BombTile);
+	for (int i = 1; i <= BombPower; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			if (!Blocked[j])
+			{
+				FTile BombedTile = BombTile + i * ToAdd[j];
+				if (BombedTile.IsValid())
+				{
+					Blocked[j] |= TileMap[BombedTile.Index()] == ETileType::Wall;
+					Blocked[j] |= TileMap[BombedTile.Index()] == ETileType::Reinforced;
+					if (TileMap[BombedTile.Index()] != ETileType::Wall) BombedTiles.Add(BombedTile);
+				}
+			}
+		}
+	}
+	return BombedTiles;
 }
 
 void AArena::Tick(const float DeltaTime)
@@ -188,12 +218,40 @@ void AArena::Tick(const float DeltaTime)
 	InstancedExplosion->ClearInstances();
 	for (int i = 0; i < GTotal; ++i)
 	{
-		if (ExplosionTimerMap[i] > 0.F)
+		if (ExplosionMap[i] && ExplosionTimerMap[i] > 0.F)
 		{
-			InstancedExplosion->AddInstance(FTransform{IndexTile(i).Location()});
+			InstancedExplosion->AddInstance(
+				FTransform{
+					FRotator{},
+					IndexTile(i).Location(),
+					FVector{1.6F}
+				}
+			);
 			ExplosionTimerMap[i] -= DeltaTime;
 		}
-		else AreaStateMap[i] = EAreaState::Normal;
+		else if (ExplosionMap[i])
+		{
+			AreaStateMap[i] = EAreaState::Normal;
+			ExplosionMap[i] = false;
+		}
 		if (IsValid(AreaObjectMap[i])) AreaObjectMap[i]->OnStateChanged(AreaStateMap[i]);
 	}
+}
+
+void AArena::PlaceBomb(const EBombType BombType, const FTile BombTile, const int32 BombPower)
+{
+	if (!BombTile.IsValid()) return;
+	if (BombType == EBombType::None || BombType == EBombType::Air) return;
+	BombTypeMap[BombTile.Index()] = BombType;
+	BombPowerMap[BombTile.Index()] = BombPower;
+	for (auto BombedTile : GetBombedTiles(BombTile, BombPower))
+		AreaStateMap[BombedTile.Index()] = EAreaState::Warning;
+}
+
+void AArena::DetonateBomb(const FTile BombTile)
+{
+	if (!BombTile.IsValid()) return;
+	for (const auto BombedTile : GetBombedTiles(BombTile, BombPowerMap[BombTile.Index()])) Explode(BombedTile);
+	BombTypeMap[BombTile.Index()] = EBombType::None;
+	BombPowerMap[BombTile.Index()] = 0;
 }

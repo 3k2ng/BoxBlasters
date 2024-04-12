@@ -50,7 +50,8 @@ public:
 	void ConsumeBomb();
 	UFUNCTION(BlueprintCallable)
 	void ReplenishBomb();
-public:
+	UFUNCTION(BlueprintPure)
+	bool IsBombAvailable() const;
 	UFUNCTION(BlueprintPure)
 	FTile GetCurrentTile() const;
 };

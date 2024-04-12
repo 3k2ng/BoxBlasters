@@ -17,7 +17,8 @@ public:
 	AArena* Arena;
 	UPROPERTY(BlueprintReadOnly)
 	ABomber* Bomber;
-
+	UPROPERTY(BlueprintReadOnly)
+	int32 Power;
 protected:
 	virtual void BeginPlay() override;
 public:
@@ -25,4 +26,8 @@ public:
 	void SetBomber(ABomber* InBomber);
 	UFUNCTION(BlueprintPure)
 	FTile GetCurrentTile() const;
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	void Activate();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	void Detonate();
 };

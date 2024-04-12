@@ -32,6 +32,8 @@ public:
 	UPROPERTY()
 	TArray<float> ExplosionTimerMap;
 	UPROPERTY()
+	TArray<bool> ExplosionMap;
+	UPROPERTY()
 	TArray<TEnumAsByte<EBombType>> BombTypeMap;
 	UPROPERTY()
 	TArray<int32> BombPowerMap;
@@ -46,5 +48,11 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 	UFUNCTION(BlueprintCallable)
+	void PlaceBomb(EBombType BombType, FTile BombTile, int32 BombPower);
+	UFUNCTION(BlueprintCallable)
+	void DetonateBomb(FTile BombTile);
+	UFUNCTION(BlueprintCallable)
 	void Explode(FTile Tile);
+	UFUNCTION(BlueprintPure)
+	TArray<FTile> GetBombedTiles(FTile BombTile, int32 BombPower);
 };

@@ -65,6 +65,21 @@ inline bool operator==(const FTile A, const FTile B)
 	return A.X == B.X && A.Y == B.Y;
 };
 
+inline FTile operator+(const FTile A, const FTile B)
+{
+	return {A.X + B.X, A.Y + B.Y};
+};
+
+inline FTile operator*(const int32 Number, const FTile Tile)
+{
+	return {Number * Tile.X, Number * Tile.Y};
+};
+
+inline FTile operator*(const FTile Tile, const int32 Number)
+{
+	return {Number * Tile.X, Number * Tile.Y};
+}
+
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
 

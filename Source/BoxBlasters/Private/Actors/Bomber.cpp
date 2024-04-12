@@ -44,6 +44,11 @@ void ABomber::ReplenishBomb()
 	--BombsPlaced;
 }
 
+bool ABomber::IsBombAvailable() const
+{
+	return Bombs > BombsPlaced;
+}
+
 FTile ABomber::GetCurrentTile() const
 {
 	return LocationTile(GetActorLocation());
