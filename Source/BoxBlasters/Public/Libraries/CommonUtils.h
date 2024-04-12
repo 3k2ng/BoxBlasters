@@ -4,6 +4,9 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "CommonUtils.generated.h"
 
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
 // throw a fatal error if x is not a valid ref
 #define CHECK_VALID(x) checkf(IsValid(x), TEXT("invalid ref"))
 
@@ -52,14 +55,54 @@ inline FTile IndexTile(const int32 Index)
 inline FTile LocationTile(const FVector Location)
 {
 	return {
-		static_cast<int32>((Location.X - GOffsetX) / GTileSize),
-		static_cast<int32>((Location.Y - GOffsetY) / GTileSize)
+		static_cast<int32>(Location.X / GTileSize - GOffsetX + 0.5F),
+		static_cast<int32>(Location.Y / GTileSize - GOffsetY + 0.5F)
 	};
 }
 
 inline bool operator==(const FTile A, const FTile B)
 {
 	return A.X == B.X && A.Y == B.Y;
+};
+
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+constexpr float GBaseBomberSpeed = 4.F * GTileSize;
+constexpr float GSpeedMultiplier = 0.25F;
+
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+UENUM(BlueprintType)
+enum class EBombType : uint8
+{
+	None UMETA(DisplayName = "None"),
+	Normal UMETA(DisplayName = "Normal"),
+	Remote UMETA(DisplayName = "Remote"),
+	Mine UMETA(DisplayName = "Mine"),
+	Air UMETA(DisplayName = "Air Strike"),
+};
+
+UENUM(BlueprintType)
+enum class ETileType : uint8
+{
+	Empty UMETA(DisplayName = "Empty"),
+	Wall UMETA(DisplayName = "Wall"),
+	Basic UMETA(DisplayName = "Basic"),
+	Reinforced UMETA(DisplayName = "Reinforced"),
+	White UMETA(DisplayName = "White"),
+	Red UMETA(DisplayName = "Red"),
+	Green UMETA(DisplayName = "Green"),
+	Blue UMETA(DisplayName = "Blue"),
+};
+
+UENUM(BlueprintType)
+enum class ELootType : uint8
+{
+	None UMETA(DisplayName = "None"),
+	Upgrade UMETA(DisplayName = "Upgrade"),
+	Special UMETA(DisplayName = "Special"),
 };
 
 UCLASS()

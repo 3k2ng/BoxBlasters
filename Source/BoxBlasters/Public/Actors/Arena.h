@@ -6,31 +6,45 @@
 #include "GameFramework/Actor.h"
 #include "Arena.generated.h"
 
-UENUM()
-enum class EStationaryBombType : uint8
-{
-	Normal UMETA(DisplayName = "Normal"),
-	Remote UMETA(DisplayName = "Remote"),
-	Mine UMETA(DisplayName = "Mine"),
-};
-
 UCLASS()
 class BOXBLASTERS_API AArena : public AActor
 {
 	GENERATED_BODY()
-	UPROPERTY()
-	UInstancedStaticMeshComponent* BaseComponent;
+	UPROPERTY(EditAnywhere)
+	UInstancedStaticMeshComponent* InstancedWall;
+	UPROPERTY(EditAnywhere)
+	UInstancedStaticMeshComponent* InstancedBox;
+	UPROPERTY(EditAnywhere)
+	UInstancedStaticMeshComponent* InstancedExplosion;
 	
 public:	
 	AArena();
-	UPROPERTY(EditAnywhere)
-	UStaticMesh* BaseMesh;
 	UPROPERTY()
-	TArray<AArea*> AreaMap;
+	TArray<TEnumAsByte<ETileType>> TileMap;
+	UPROPERTY()
+	TArray<TEnumAsByte<ELootType>> LootMap;
+	UPROPERTY()
+	TArray<int32> BoxInstanceMap;
+	UPROPERTY()
+	TArray<AArea*> AreaObjectMap;
+	UPROPERTY()
+	TArray<TEnumAsByte<EAreaState>> AreaStateMap;
+	UPROPERTY()
+	TArray<float> ExplosionTimerMap;
+	UPROPERTY()
+	TArray<TEnumAsByte<EBombType>> BombTypeMap;
+	UPROPERTY()
+	TArray<int32> BombPowerMap;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AArea> AreaClass;
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnConstruction(const FTransform & Transform) override;
-	
+	void AddBox(FTile Tile, ETileType BoxType);
+	void UpdateBoxes();
 public:
-	
+	virtual void Tick(float DeltaTime) override;
+	UFUNCTION(BlueprintCallable)
+	void Explode(FTile Tile);
 };

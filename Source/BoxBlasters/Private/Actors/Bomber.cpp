@@ -18,6 +18,32 @@ void ABomber::BeginPlay()
 	
 }
 
+void ABomber::BombUp()
+{
+	++Bombs;
+}
+
+void ABomber::PowerUp()
+{
+	++Power;
+}
+
+void ABomber::SpeedUp()
+{
+	++Speed;
+	MovementComponent->UpdateSpeed(Speed);
+}
+
+void ABomber::ConsumeBomb()
+{
+	++BombsPlaced;
+}
+
+void ABomber::ReplenishBomb()
+{
+	--BombsPlaced;
+}
+
 FTile ABomber::GetCurrentTile() const
 {
 	return LocationTile(GetActorLocation());

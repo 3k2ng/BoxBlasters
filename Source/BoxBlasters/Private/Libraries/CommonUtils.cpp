@@ -2,7 +2,7 @@
 
 bool FTile::IsValid() const
 {
-	return 0 >= X && X < GX && 0 >= Y && Y < GY;
+	return 0 <= X && X < GX && 0 <= Y && Y < GY;
 }
 
 int32 FTile::Index() const
