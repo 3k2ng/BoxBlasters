@@ -79,7 +79,6 @@ bool AArmedBomber::ActivateSpecial()
 			DeployedAirStrike = PlacedBomb;
 			return true;
 		}
-	default: ;
 	}
 	return false;
 }

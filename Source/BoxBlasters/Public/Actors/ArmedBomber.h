@@ -30,7 +30,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<AAirStrike> AirClass;
 	UPROPERTY(BlueprintReadOnly)
-	TEnumAsByte<ESpecialType> EquippedSpecial = ESpecialType::None;
+	ESpecialType EquippedSpecial = ESpecialType::None;
 	UPROPERTY(BlueprintReadOnly)
 	ABomb* DeployedRemote;
 	UPROPERTY(BlueprintReadOnly)

@@ -26,7 +26,7 @@ class BOXBLASTERS_API APickUp : public AActor
 	
 public:	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TEnumAsByte<EPickUpType> Type;
+	EPickUpType Type;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TEnumAsByte<EPickUpColor> Color;
+	EPickUpColor Color;
 };
