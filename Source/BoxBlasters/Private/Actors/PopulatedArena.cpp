@@ -10,7 +10,7 @@ void APopulatedArena::BeginPlay()
 	{
 		if (IsValid(BomberClass[i]))
 		{
-			Bombers[i] = GetWorld()->SpawnActor<ABomber>(
+			Bombers[i] = GetWorld()->SpawnActor<AArmedBomber>(
 				BomberClass[i],
 				FTransform{Spawns[i].Location()}
 			);

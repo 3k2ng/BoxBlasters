@@ -3,8 +3,11 @@
 void AArmedBomber::Tick(const float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (IsValid(DeployedAirStrike))Arena->AirStrikeActive[Index] = true;
-	else Arena->AirStrikeActive[Index] = false;
+	if (IsValid(Arena))
+	{
+		if (IsValid(DeployedAirStrike))Arena->AirStrikeActive[Index] = true;
+		else Arena->AirStrikeActive[Index] = false;
+	}
 }
 
 bool AArmedBomber::PlaceBomb()

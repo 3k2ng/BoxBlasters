@@ -26,9 +26,9 @@ TArray<FTransform> GetBorder()
 	return Border;
 }
 
-TArray<TEnumAsByte<ETileType>> DefaultMap()
+TArray<ETileType> DefaultMap()
 {
-	TArray<TEnumAsByte<ETileType>> Map;
+	TArray<ETileType> Map;
 	Map.Init(ETileType::Empty, GTotal);
 	for (int i = 0; i < GTotal; ++i)
 	{
@@ -38,7 +38,7 @@ TArray<TEnumAsByte<ETileType>> DefaultMap()
 	return Map;
 }
 
-TArray<TEnumAsByte<ETileType>> GenerateTiles(TArray<TEnumAsByte<ETileType>> Map)
+void GenerateTiles(TArray<ETileType>& TileMap, TArray<ELootType>& LootMap, const ETileGen TileGen)
 {
 	TArray<FTile> OccupiedTiles = {
 		{0, 0}, {-2, 0}, {0, -2}, {-2, -2}
@@ -50,14 +50,87 @@ TArray<TEnumAsByte<ETileType>> GenerateTiles(TArray<TEnumAsByte<ETileType>> Map)
 		OccupiedTiles.Add(OccupiedTiles[i] + FTile{1, 0});
 		OccupiedTiles.Add(OccupiedTiles[i] + FTile{1, 1});
 	}
-	for (int i = 0; i < GTotal; ++i)
+	switch (TileGen)
 	{
-		if (!OccupiedTiles.Contains(IndexTile(i)) && Map[i] != ETileType::Wall)
+	case ETileGen::Standard:
 		{
-			Map[i] = ETileType::Basic;
+			for (int i = 0; i < GTotal; ++i)
+			{
+				const FTile Tile = IndexTile(i);
+				if (!OccupiedTiles.Contains(Tile) && TileMap[i] != ETileType::Wall)
+				{
+					TileMap[i] = ETileType::Basic;
+					if ((Tile.X == 3 || Tile.X == 11) && Tile.Y % 2 == 0 && (Tile.Y < 4 || Tile.Y > 8)) TileMap[i] = ETileType::Reinforced;
+					if ((Tile.Y == 3 || Tile.Y == 9) && Tile.X % 2 == 0 && (Tile.X < 4 || Tile.X > 10)) TileMap[i] = ETileType::Reinforced;
+					if ((Tile.X == 5 || Tile.X == 9) && Tile.Y % 2 == 0 && (Tile.Y < 6 || Tile.Y > 6)) TileMap[i] = ETileType::Reinforced;
+					if ((Tile.Y == 5 || Tile.Y == 7) && Tile.X % 2 == 0 && (Tile.X < 6 || Tile.X > 8)) TileMap[i] = ETileType::Reinforced;
+				}
+			}
+			for (int i = 0; i < GTotal; ++i)
+			{
+				if (TileMap[i] == ETileType::Basic && FMath::RandRange(1, 100) <= 50) TileMap[i] = ETileType::White;
+			}
 		}
+		break;
+	case ETileGen::Empty:
+		break;
+	case ETileGen::Random:
+		/*
+		 * 0 = BASIC
+		 * 1 = REINFORCED
+		 * 2 = WHITE EMPTY
+		 * 3 = WHITE PERM
+		 * 4 = RED PERM
+		 * 5 = RED TEMP
+		 * 6 = GREEN PERM
+		 * 7 = GREEN TEMP
+		 * 8 = BLUE PERM
+		 * 9 = BLUE TEMP
+		 */
+		{
+			for (int i = 0; i < GTotal; ++i)
+			{
+				if (!OccupiedTiles.Contains(IndexTile(i)) && TileMap[i] != ETileType::Wall)
+				{
+					switch (FMath::RandRange(0, 9))
+					{
+					case 0: TileMap[i] = ETileType::Basic;
+						LootMap[i] = ELootType::None;
+						break;
+					case 1: TileMap[i] = ETileType::Reinforced;
+						LootMap[i] = ELootType::None;
+						break;
+					case 2: TileMap[i] = ETileType::White;
+						LootMap[i] = ELootType::None;
+						break;
+					case 3: TileMap[i] = ETileType::White;
+						LootMap[i] = ELootType::Upgrade;
+						break;
+					case 4: TileMap[i] = ETileType::Red;
+						LootMap[i] = ELootType::Upgrade;
+						break;
+					case 5: TileMap[i] = ETileType::Red;
+						LootMap[i] = ELootType::Special;
+						break;
+					case 6: TileMap[i] = ETileType::Green;
+						LootMap[i] = ELootType::Upgrade;
+						break;
+					case 7: TileMap[i] = ETileType::Green;
+						LootMap[i] = ELootType::Special;
+						break;
+					case 8: TileMap[i] = ETileType::Blue;
+						LootMap[i] = ELootType::Upgrade;
+						break;
+					case 9: TileMap[i] = ETileType::Blue;
+						LootMap[i] = ELootType::Special;
+						break;
+					default: ;
+					}
+				}
+			}
+		}
+		break;
 	}
-	return Map;
 }
 
 AArena::AArena()
@@ -94,10 +167,16 @@ AArena::AArena()
 void AArena::BeginPlay()
 {
 	Super::BeginPlay();
-	CHECK_VALID(InstancedWall->GetStaticMesh())
-	CHECK_VALID(InstancedBox->GetStaticMesh())
-	CHECK_VALID(InstancedExplosion->GetStaticMesh())
-	CHECK_VALID(AreaClass)
+	CHECK_VALID(InstancedWall->GetStaticMesh());
+	CHECK_VALID(InstancedBox->GetStaticMesh());
+	CHECK_VALID(InstancedExplosion->GetStaticMesh());
+	CHECK_VALID(AreaClass);
+	CHECK_VALID(RedUpgrade);
+	CHECK_VALID(GreenUpgrade);
+	CHECK_VALID(BlueUpgrade);
+	CHECK_VALID(RedSpecial);
+	CHECK_VALID(GreenSpecial);
+	CHECK_VALID(BlueSpecial);
 	for (int i = 0; i < GTotal; ++i)
 	{
 		if (TileMap[i] != ETileType::Wall)
@@ -108,7 +187,7 @@ void AArena::BeginPlay()
 			);
 		}
 	}
-	TileMap = GenerateTiles(TileMap);
+	GenerateTiles(TileMap, LootMap, TileGen);
 	UpdateBoxes();
 }
 
@@ -143,22 +222,22 @@ void AArena::AddBox(const FTile Tile, const ETileType BoxType)
 		case ETileType::Wall:
 			return;
 		case ETileType::Basic:
-			BoxColor = {0.6F, 0.5F, 0.4F};
+			BoxColor = {0.5F, 0.4F, 0.3F};
 			break;
 		case ETileType::Reinforced:
-			BoxColor = {0.F, 0.F, 0.F};
+			BoxColor = {0.2F, 0.2F, 0.3F};
 			break;
 		case ETileType::White:
-			BoxColor = {1.F, 1.F, 1.F};
+			BoxColor = {0.9F, 0.9F, 0.9F};
 			break;
 		case ETileType::Red:
-			BoxColor = {1.F, 0.F, 0.F};
+			BoxColor = {0.9F, 0.1F, 0.1F};
 			break;
 		case ETileType::Green:
-			BoxColor = {0.F, 1.F, 0.F};
+			BoxColor = {0.1F, 0.9F, 0.1F};
 			break;
 		case ETileType::Blue:
-			BoxColor = {0.F, 0.F, 1.F};
+			BoxColor = {0.1F, 0.1F, 0.9F};
 			break;
 		default: ;
 		}
@@ -239,11 +318,13 @@ void AArena::ExplodeAt(const FTile Tile)
 TArray<FTile> AArena::GetBombedTiles(const FTile BombTile, const int32 BombPower)
 {
 	TArray<FTile> BombedTiles;
+	if (TileMap[BombTile.Index()] == ETileType::Wall) return BombedTiles;
 	bool Blocked[] = {false, false, false, false};
 	constexpr FTile ToAdd[] = {
 		{0, -1}, {0, 1}, {-1, 0}, {1, 0}
 	};
 	BombedTiles.Add(BombTile);
+	if (TileMap[BombTile.Index()] == ETileType::Reinforced) return BombedTiles;
 	for (int i = 1; i <= BombPower; ++i)
 	{
 		for (int j = 0; j < 4; ++j)
@@ -311,15 +392,79 @@ bool AArena::TryBreak(const FTile Tile)
 		return false;
 	case ETileType::White:
 		TileMap[Tile.Index()] = ETileType::Empty;
+		if (LootMap[Tile.Index()] == ELootType::Upgrade)
+		{
+			switch (FMath::RandRange(0, 2))
+			{
+			case 0: GetWorld()->SpawnActor<APickUp>(
+					RedUpgrade,
+					FTransform{Tile.Location()}
+				);
+				break;
+			case 1: GetWorld()->SpawnActor<APickUp>(
+					GreenUpgrade,
+					FTransform{Tile.Location()}
+				);
+				break;
+			case 2: GetWorld()->SpawnActor<APickUp>(
+					BlueUpgrade,
+					FTransform{Tile.Location()}
+				);
+				break;
+			default: ;
+			}
+		}
 		return true;
 	case ETileType::Red:
 		TileMap[Tile.Index()] = ETileType::Empty;
+		if (LootMap[Tile.Index()] == ELootType::Special)
+		{
+			GetWorld()->SpawnActor<APickUp>(
+				RedSpecial,
+				FTransform{Tile.Location()}
+			);
+		}
+		else if (LootMap[Tile.Index()] == ELootType::Upgrade)
+		{
+			GetWorld()->SpawnActor<APickUp>(
+				RedUpgrade,
+				FTransform{Tile.Location()}
+			);
+		}
 		return true;
 	case ETileType::Green:
 		TileMap[Tile.Index()] = ETileType::Empty;
+		if (LootMap[Tile.Index()] == ELootType::Special)
+		{
+			GetWorld()->SpawnActor<APickUp>(
+				GreenSpecial,
+				FTransform{Tile.Location()}
+			);
+		}
+		else if (LootMap[Tile.Index()] == ELootType::Upgrade)
+		{
+			GetWorld()->SpawnActor<APickUp>(
+				GreenUpgrade,
+				FTransform{Tile.Location()}
+			);
+		}
 		return true;
 	case ETileType::Blue:
 		TileMap[Tile.Index()] = ETileType::Empty;
+		if (LootMap[Tile.Index()] == ELootType::Special)
+		{
+			GetWorld()->SpawnActor<APickUp>(
+				BlueSpecial,
+				FTransform{Tile.Location()}
+			);
+		}
+		else if (LootMap[Tile.Index()] == ELootType::Upgrade)
+		{
+			GetWorld()->SpawnActor<APickUp>(
+				BlueUpgrade,
+				FTransform{Tile.Location()}
+			);
+		}
 		return true;
 	default:
 		return false;

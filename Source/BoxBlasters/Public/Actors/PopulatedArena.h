@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Actors/Arena.h"
-#include "Actors/Bomber.h"
+#include "Actors/ArmedBomber.h"
 #include "PopulatedArena.generated.h"
 
 UCLASS()
@@ -13,7 +13,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ABomber> BomberClass[4];
 	UPROPERTY(EditAnywhere)
-	ABomber* Bombers[4];
+	AArmedBomber* Bombers[4];
 protected:
 	virtual void BeginPlay() override;
 };

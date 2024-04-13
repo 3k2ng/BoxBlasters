@@ -6,7 +6,7 @@
 #include "Actors/Bomb.h"
 #include "ArmedBomber.generated.h"
 
-UENUM()
+UENUM(BlueprintType)
 enum class ESpecialType : uint8
 {
 	None UMETA(DisplayName = "None"),

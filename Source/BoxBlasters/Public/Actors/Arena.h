@@ -1,28 +1,52 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Actors/PickUp.h"
 #include "Actors/Area.h"
 #include "Libraries/CommonUtils.h"
 #include "GameFramework/Actor.h"
 #include "Arena.generated.h"
 
+UENUM(BlueprintType)
+enum class ETileGen : uint8
+{
+	Standard UMETA(DisplayName = "Standard"),
+	Empty UMETA(DisplayName = "Empty"),
+	Random UMETA(DisplayName = "Random"),
+};
+
 UCLASS()
 class BOXBLASTERS_API AArena : public AActor
 {
 	GENERATED_BODY()
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	UInstancedStaticMeshComponent* InstancedWall;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	UInstancedStaticMeshComponent* InstancedBox;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	UInstancedStaticMeshComponent* InstancedExplosion;
-	
+	UPROPERTY(EditAnywhere)
+	ETileGen TileGen;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AArea> AreaClass;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<APickUp> RedUpgrade;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<APickUp> GreenUpgrade;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<APickUp> BlueUpgrade;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<APickUp> RedSpecial;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<APickUp> GreenSpecial;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<APickUp> BlueSpecial;
 public:	
 	AArena();
 	UPROPERTY()
-	TArray<TEnumAsByte<ETileType>> TileMap;
+	TArray<ETileType> TileMap;
 	UPROPERTY()
-	TArray<TEnumAsByte<ELootType>> LootMap;
+	TArray<ELootType> LootMap;
 	UPROPERTY()
 	TArray<int32> BoxInstanceMap;
 	UPROPERTY()
@@ -30,11 +54,9 @@ public:
 	UPROPERTY()
 	TArray<float> ExplosionTimerMap;
 	UPROPERTY()
-	TArray<TEnumAsByte<EBombType>> BombTypeMap;
+	TArray<EBombType> BombTypeMap;
 	UPROPERTY()
 	TArray<int32> BombPowerMap;
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<AArea> AreaClass;
 	UPROPERTY()
 	TArray<FTile> AirStrikeTarget;
 	UPROPERTY()
