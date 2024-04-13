@@ -38,6 +38,28 @@ TArray<TEnumAsByte<ETileType>> DefaultMap()
 	return Map;
 }
 
+TArray<TEnumAsByte<ETileType>> GenerateTiles(TArray<TEnumAsByte<ETileType>> Map)
+{
+	TArray<FTile> OccupiedTiles = {
+		{0, 0}, {-2, 0}, {0, -2}, {-2, -2}
+	};
+	for (int i = 0; i < 4; ++i)
+	{
+		OccupiedTiles[i] = OccupiedTiles[i].Mod();
+		OccupiedTiles.Add(OccupiedTiles[i] + FTile{0, 1});
+		OccupiedTiles.Add(OccupiedTiles[i] + FTile{1, 0});
+		OccupiedTiles.Add(OccupiedTiles[i] + FTile{1, 1});
+	}
+	for (int i = 0; i < GTotal; ++i)
+	{
+		if (!OccupiedTiles.Contains(IndexTile(i)) && Map[i] != ETileType::Wall)
+		{
+			Map[i] = ETileType::Basic;
+		}
+	}
+	return Map;
+}
+
 AArena::AArena()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -61,11 +83,12 @@ AArena::AArena()
 	LootMap.Init(ELootType::None, GTotal);
 	BoxInstanceMap.Init(-1, GTotal);
 	AreaObjectMap.Init(nullptr, GTotal);
-	AreaStateMap.Init(EAreaState::Normal, GTotal);
-	ExplosionTimerMap.Init(0.F, GTotal);
-	ExplosionMap.Init(false, GTotal);
+	ExplosionTimerMap.Init(-1.F, GTotal);
 	BombTypeMap.Init(EBombType::None, GTotal);
 	BombPowerMap.Init(0, GTotal);
+	AirStrikeTarget.Init({}, 4);
+	AirStrikeActive.Init(false, 4);
+	AirStrikePower.Init(-1, 4);
 }
 
 void AArena::BeginPlay()
@@ -85,6 +108,7 @@ void AArena::BeginPlay()
 			);
 		}
 	}
+	TileMap = GenerateTiles(TileMap);
 	UpdateBoxes();
 }
 
@@ -107,9 +131,11 @@ void AArena::AddBox(const FTile Tile, const ETileType BoxType)
 {
 	if (Tile.IsValid())
 	{
-		float RedValue = 0.F;
-		float GreenValue = 0.F;
-		float BlueValue = 0.F;
+		struct FColor
+		{
+			float Red, Green, Blue;
+		};
+		FColor BoxColor{};
 		switch (BoxType)
 		{
 		case ETileType::Empty:
@@ -117,48 +143,36 @@ void AArena::AddBox(const FTile Tile, const ETileType BoxType)
 		case ETileType::Wall:
 			return;
 		case ETileType::Basic:
-			RedValue = 0.5F;
-			GreenValue = 0.5F;
-			BlueValue = 0.5F;
+			BoxColor = {0.6F, 0.5F, 0.4F};
 			break;
 		case ETileType::Reinforced:
-			RedValue = 0.F;
-			GreenValue = 0.F;
-			BlueValue = 0.F;
+			BoxColor = {0.F, 0.F, 0.F};
 			break;
 		case ETileType::White:
-			RedValue = 1.F;
-			GreenValue = 1.F;
-			BlueValue = 1.F;
+			BoxColor = {1.F, 1.F, 1.F};
 			break;
 		case ETileType::Red:
-			RedValue = 1.F;
-			GreenValue = 0.F;
-			BlueValue = 0.F;
+			BoxColor = {1.F, 0.F, 0.F};
 			break;
 		case ETileType::Green:
-			RedValue = 0.F;
-			GreenValue = 1.F;
-			BlueValue = 0.F;
+			BoxColor = {0.F, 1.F, 0.F};
 			break;
 		case ETileType::Blue:
-			RedValue = 0.F;
-			GreenValue = 0.F;
-			BlueValue = 1.F;
+			BoxColor = {0.F, 0.F, 1.F};
 			break;
 		default: ;
 		}
 		TileMap[Tile.Index()] = BoxType;
 		BoxInstanceMap[Tile.Index()] = InstancedBox->AddInstance(
 			FTransform{
-				FRotator{},
+				FRotator{0.F},
 				Tile.Location(),
 				FVector{0.8F}
 			}
 		);
-		InstancedBox->SetCustomDataValue(BoxInstanceMap[Tile.Index()], 0, RedValue, true);
-		InstancedBox->SetCustomDataValue(BoxInstanceMap[Tile.Index()], 1, GreenValue, true);
-		InstancedBox->SetCustomDataValue(BoxInstanceMap[Tile.Index()], 2, BlueValue, true);
+		InstancedBox->SetCustomDataValue(BoxInstanceMap[Tile.Index()], 0, BoxColor.Red, true);
+		InstancedBox->SetCustomDataValue(BoxInstanceMap[Tile.Index()], 1, BoxColor.Green, true);
+		InstancedBox->SetCustomDataValue(BoxInstanceMap[Tile.Index()], 2, BoxColor.Blue, true);
 	}
 }
 
@@ -171,7 +185,46 @@ void AArena::UpdateBoxes()
 	}
 }
 
-void AArena::Explode(const FTile Tile)
+void AArena::UpdateAreaMap()
+{
+	TArray<FTile> BlockedTiles, WarningTiles;
+	for (int i = 0; i < GTotal; ++i)
+	{
+		if (!IsValid(AreaObjectMap[i])) continue;;
+		AreaObjectMap[i]->SetBlocked(false);
+		AreaObjectMap[i]->SetWarning(false);
+		if (TileMap[i] != ETileType::Empty ||
+			ExplosionTimerMap[i] >= 0.F)
+			BlockedTiles.AddUnique(IndexTile(i));
+		if (BombTypeMap[i] != EBombType::None)
+		{
+			for (const FTile BombedTile : GetBombedTiles(IndexTile(i), BombPowerMap[i]))
+			{
+				WarningTiles.AddUnique(BombedTile);
+			}
+		}
+	}
+	for (int i = 0; i < 4; ++i)
+	{
+		if (AirStrikeActive[i])
+		{
+			for (const FTile BombedTile : GetBombedTiles(AirStrikeTarget[i], AirStrikePower[i]))
+			{
+				WarningTiles.AddUnique(BombedTile);
+			}
+		}
+	}
+	for (const FTile BlockedTile : BlockedTiles)
+	{
+		if (IsValid(AreaObjectMap[BlockedTile.Index()])) AreaObjectMap[BlockedTile.Index()]->SetBlocked(true);
+	}
+	for (const FTile WarningTile : WarningTiles)
+	{
+		if (IsValid(AreaObjectMap[WarningTile.Index()])) AreaObjectMap[WarningTile.Index()]->SetWarning(true);
+	}
+}
+
+void AArena::ExplodeAt(const FTile Tile)
 {
 	if (Tile.IsValid())
 	{
@@ -179,8 +232,6 @@ void AArena::Explode(const FTile Tile)
 		if (TileMap[i] != ETileType::Wall && TileMap[i] != ETileType::Reinforced)
 		{
 			ExplosionTimerMap[i] = 0.2F;
-			ExplosionMap[i] = true;
-			AreaStateMap[i] = EAreaState::Blocked;
 		}
 	}
 }
@@ -188,7 +239,7 @@ void AArena::Explode(const FTile Tile)
 TArray<FTile> AArena::GetBombedTiles(const FTile BombTile, const int32 BombPower)
 {
 	TArray<FTile> BombedTiles;
-	bool Blocked[] = { false, false, false, false };
+	bool Blocked[] = {false, false, false, false};
 	constexpr FTile ToAdd[] = {
 		{0, -1}, {0, 1}, {-1, 0}, {1, 0}
 	};
@@ -218,7 +269,7 @@ void AArena::Tick(const float DeltaTime)
 	InstancedExplosion->ClearInstances();
 	for (int i = 0; i < GTotal; ++i)
 	{
-		if (ExplosionMap[i] && ExplosionTimerMap[i] > 0.F)
+		if (ExplosionTimerMap[i] > 0.F)
 		{
 			InstancedExplosion->AddInstance(
 				FTransform{
@@ -229,29 +280,83 @@ void AArena::Tick(const float DeltaTime)
 			);
 			ExplosionTimerMap[i] -= DeltaTime;
 		}
-		else if (ExplosionMap[i])
-		{
-			AreaStateMap[i] = EAreaState::Normal;
-			ExplosionMap[i] = false;
-		}
-		if (IsValid(AreaObjectMap[i])) AreaObjectMap[i]->OnStateChanged(AreaStateMap[i]);
+	}
+	UpdateAreaMap();
+}
+
+bool AArena::PlaceBomb(const EBombType BombType, const FTile BombTile, const int32 BombPower)
+{
+	if (!BombTile.IsValid()) return false;
+	if (BombType == EBombType::None || BombType == EBombType::Air) return false;
+	if (BombTypeMap[BombTile.Index()] != EBombType::None) return false;
+	BombTypeMap[BombTile.Index()] = BombType;
+	BombPowerMap[BombTile.Index()] = BombPower;
+	return true;
+}
+
+bool AArena::TryBreak(const FTile Tile)
+{
+	if (!Tile.IsValid()) return false;
+	switch (TileMap[Tile.Index()])
+	{
+	case ETileType::Empty:
+		return true;
+	case ETileType::Wall:
+		return false;
+	case ETileType::Basic:
+		TileMap[Tile.Index()] = ETileType::Empty;
+		return true;
+	case ETileType::Reinforced:
+		TileMap[Tile.Index()] = ETileType::Basic;
+		return false;
+	case ETileType::White:
+		TileMap[Tile.Index()] = ETileType::Empty;
+		return true;
+	case ETileType::Red:
+		TileMap[Tile.Index()] = ETileType::Empty;
+		return true;
+	case ETileType::Green:
+		TileMap[Tile.Index()] = ETileType::Empty;
+		return true;
+	case ETileType::Blue:
+		TileMap[Tile.Index()] = ETileType::Empty;
+		return true;
+	default:
+		return false;
 	}
 }
 
-void AArena::PlaceBomb(const EBombType BombType, const FTile BombTile, const int32 BombPower)
+TArray<FTile> AArena::DetonateBomb(const FTile BombTile)
 {
-	if (!BombTile.IsValid()) return;
-	if (BombType == EBombType::None || BombType == EBombType::Air) return;
-	BombTypeMap[BombTile.Index()] = BombType;
-	BombPowerMap[BombTile.Index()] = BombPower;
-	for (auto BombedTile : GetBombedTiles(BombTile, BombPower))
-		AreaStateMap[BombedTile.Index()] = EAreaState::Warning;
+	TArray<FTile> DestroyedTiles;
+	if (!BombTile.IsValid() || BombTypeMap[BombTile.Index()] == EBombType::None) return DestroyedTiles;
+	BombTypeMap[BombTile.Index()] = EBombType::None;
+	BombExplode(BombTile, BombPowerMap[BombTile.Index()]);
+	BombPowerMap[BombTile.Index()] = 0;
+	return DestroyedTiles;
 }
 
-void AArena::DetonateBomb(const FTile BombTile)
+TArray<FTile> AArena::DetonateAirStrike(const int32 Index, const int32 BombPower)
 {
-	if (!BombTile.IsValid()) return;
-	for (const auto BombedTile : GetBombedTiles(BombTile, BombPowerMap[BombTile.Index()])) Explode(BombedTile);
-	BombTypeMap[BombTile.Index()] = EBombType::None;
-	BombPowerMap[BombTile.Index()] = 0;
+	return BombExplode(AirStrikeTarget[Index], BombPower);
+}
+
+TArray<FTile> AArena::BombExplode(const FTile BombTile, const int32 BombPower)
+{
+	TArray<FTile> DestroyedTiles;
+	if (!BombTile.IsValid()) return DestroyedTiles;
+	for (const auto BombedTile : GetBombedTiles(BombTile, BombPower))
+	{
+		if (TryBreak(BombedTile))
+		{
+			DestroyedTiles.AddUnique(BombedTile);
+			ExplodeAt(BombedTile);
+		}
+		for (const auto MoreBombedTile : DetonateBomb(BombedTile))
+		{
+			DestroyedTiles.AddUnique(MoreBombedTile);
+		}
+	}
+	UpdateBoxes();
+	return DestroyedTiles;
 }

@@ -34,7 +34,7 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	int32 Power = 1;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	int32 Speed = 0;
 
 protected:

@@ -26,6 +26,8 @@ public:
 	void SetBomber(ABomber* InBomber);
 	UFUNCTION(BlueprintPure)
 	FTile GetCurrentTile() const;
+	UFUNCTION(BlueprintPure)
+	bool CheckBombMap() const;
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
 	void Activate();
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)

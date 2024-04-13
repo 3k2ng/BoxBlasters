@@ -28,31 +28,39 @@ public:
 	UPROPERTY()
 	TArray<AArea*> AreaObjectMap;
 	UPROPERTY()
-	TArray<TEnumAsByte<EAreaState>> AreaStateMap;
-	UPROPERTY()
 	TArray<float> ExplosionTimerMap;
-	UPROPERTY()
-	TArray<bool> ExplosionMap;
 	UPROPERTY()
 	TArray<TEnumAsByte<EBombType>> BombTypeMap;
 	UPROPERTY()
 	TArray<int32> BombPowerMap;
-
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AArea> AreaClass;
+	UPROPERTY()
+	TArray<FTile> AirStrikeTarget;
+	UPROPERTY()
+	TArray<bool> AirStrikeActive;
+	UPROPERTY()
+	TArray<int32> AirStrikePower;
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnConstruction(const FTransform & Transform) override;
 	void AddBox(FTile Tile, ETileType BoxType);
 	void UpdateBoxes();
+	void UpdateAreaMap();
 public:
 	virtual void Tick(float DeltaTime) override;
 	UFUNCTION(BlueprintCallable)
-	void PlaceBomb(EBombType BombType, FTile BombTile, int32 BombPower);
+	bool PlaceBomb(EBombType BombType, FTile BombTile, int32 BombPower);
 	UFUNCTION(BlueprintCallable)
-	void DetonateBomb(FTile BombTile);
+	bool TryBreak(FTile Tile);
 	UFUNCTION(BlueprintCallable)
-	void Explode(FTile Tile);
+	TArray<FTile> DetonateBomb(FTile BombTile);
+	UFUNCTION(BlueprintCallable)
+	TArray<FTile> DetonateAirStrike(int32 Index, int32 BombPower);
+	UFUNCTION(BlueprintCallable)
+	TArray<FTile> BombExplode(FTile BombTile, int32 BombPower);
+	UFUNCTION(BlueprintCallable)
+	void ExplodeAt(FTile Tile);
 	UFUNCTION(BlueprintPure)
 	TArray<FTile> GetBombedTiles(FTile BombTile, int32 BombPower);
 };
