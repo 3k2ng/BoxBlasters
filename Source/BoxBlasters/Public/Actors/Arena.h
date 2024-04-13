@@ -4,16 +4,9 @@
 #include "Actors/PickUp.h"
 #include "Actors/Area.h"
 #include "Libraries/CommonUtils.h"
+#include "Libraries/TileGen.h"
 #include "GameFramework/Actor.h"
 #include "Arena.generated.h"
-
-UENUM(BlueprintType)
-enum class ETileGen : uint8
-{
-	Standard UMETA(DisplayName = "Standard"),
-	Empty UMETA(DisplayName = "Empty"),
-	Random UMETA(DisplayName = "Random"),
-};
 
 UCLASS()
 class BOXBLASTERS_API AArena : public AActor

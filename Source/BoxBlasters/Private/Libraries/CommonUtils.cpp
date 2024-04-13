@@ -35,6 +35,17 @@ FTile FTile::Clamp() const
 	};
 }
 
+TArray<FTile> FTile::InRadius(const int32 Radius) const
+{
+	TArray<FTile> Tiles;
+	for (int i = 0; i < GTotal; ++i)
+	{
+		const FTile Dist = IndexTile(i) - *this;
+		if (Dist.X * Dist.X + Dist.Y * Dist.Y < Radius * Radius) Tiles.Add(IndexTile(i));
+	}
+	return Tiles;
+}
+
 FVector UCommonUtils::GetTileLocation(const FTile Tile)
 {
 	return Tile.Location();

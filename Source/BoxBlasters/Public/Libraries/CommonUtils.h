@@ -42,6 +42,7 @@ struct FTile
 	FTile Mod() const;
 	// clamp its two components between 0 and max
 	FTile Clamp() const;
+	TArray<FTile> InRadius(int32 Radius) const;
 };
 
 // return the tile at the canonical index given
@@ -68,6 +69,11 @@ inline bool operator==(const FTile A, const FTile B)
 inline FTile operator+(const FTile A, const FTile B)
 {
 	return {A.X + B.X, A.Y + B.Y};
+};
+
+inline FTile operator-(const FTile A, const FTile B)
+{
+	return {A.X - B.X, A.Y - B.Y};
 };
 
 inline FTile operator*(const int32 Number, const FTile Tile)
