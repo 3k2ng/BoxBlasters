@@ -274,7 +274,7 @@ void AArena::Tick(const float DeltaTime)
 bool AArena::PlaceBomb(const EBombType BombType, const FTile BombTile, const int32 BombPower)
 {
 	if (!BombTile.IsValid()) return false;
-	if (BombType == EBombType::None || BombType == EBombType::Air) return false;
+	if (BombType == EBombType::None) return false;
 	if (BombTypeMap[BombTile.Index()] != EBombType::None) return false;
 	BombTypeMap[BombTile.Index()] = BombType;
 	BombPowerMap[BombTile.Index()] = BombPower;

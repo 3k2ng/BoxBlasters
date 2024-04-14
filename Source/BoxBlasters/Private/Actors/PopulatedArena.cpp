@@ -22,15 +22,33 @@ void APopulatedArena::BeginPlay()
 	constexpr FTile Spawns[] = {
 		{0, 0}, {-1, 0}, {0, -1}, {-1, -1}
 	};
-	for (int i = 0; i < 4; ++i)
+	for (int32 i = 0; i < 4; ++i)
 	{
 		if (IsValid(BomberClass[i]))
 		{
 			Bombers[i] = GetWorld()->SpawnActor<AArmedBomber>(
 				BomberClass[i],
-				FTransform{Spawns[i].Location()}
+				FTransform{Spawns[i].Mod().Location()}
 			);
-			Bombers[i]->Arena = this;
+			if (IsValid(Bombers[i]))
+			{
+				Bombers[i]->Arena = this;
+				Bombers[i]->Index = i;
+			}
 		}
 	}
+}
+
+bool APopulatedArena::TileHasBomber(const FTile Tile, const int32 Index) const
+{
+	return IsValid(Bombers[Index]) && Bombers[Index]->GetCurrentTile() == Tile;
+}
+
+bool APopulatedArena::TileHasOtherBomber(const FTile Tile, const int32 Index) const
+{
+	for (int i = 0; i < 4; ++i)
+	{
+		if (TileHasBomber(Tile, i) && i != Index) return true;
+	}
+	return false;
 }

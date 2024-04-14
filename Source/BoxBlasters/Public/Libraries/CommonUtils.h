@@ -42,6 +42,7 @@ struct FTile
 	FTile Mod() const;
 	// clamp its two components between 0 and max
 	FTile Clamp() const;
+	TArray<FTile> Neighbors() const;
 	TArray<FTile> InRadius(int32 Radius) const;
 };
 
@@ -61,9 +62,19 @@ inline FTile LocationTile(const FVector Location)
 	};
 }
 
+inline bool operator<(const FTile A, const FTile B)
+{
+	return A.X < B.X || (A.X == B.X && A.Y < B.Y);
+};
+
 inline bool operator==(const FTile A, const FTile B)
 {
 	return A.X == B.X && A.Y == B.Y;
+};
+
+inline bool operator!=(const FTile A, const FTile B)
+{
+	return A.X != B.X || A.Y != B.Y;
 };
 
 inline FTile operator+(const FTile A, const FTile B)
@@ -102,7 +113,6 @@ enum class EBombType : uint8
 	Normal UMETA(DisplayName = "Normal"),
 	Remote UMETA(DisplayName = "Remote"),
 	Mine UMETA(DisplayName = "Mine"),
-	Air UMETA(DisplayName = "Air Strike"),
 };
 
 UENUM(BlueprintType)

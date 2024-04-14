@@ -35,6 +35,16 @@ FTile FTile::Clamp() const
 	};
 }
 
+TArray<FTile> FTile::Neighbors() const
+{
+	TArray<FTile> Tiles;
+	if (FTile{X - 1, Y}.IsValid()) Tiles.Add({X - 1, Y});
+	if (FTile{X + 1, Y}.IsValid()) Tiles.Add({X + 1, Y});
+	if (FTile{X, Y - 1}.IsValid()) Tiles.Add({X, Y - 1});
+	if (FTile{X, Y + 1}.IsValid()) Tiles.Add({X, Y + 1});
+	return Tiles;
+}
+
 TArray<FTile> FTile::InRadius(const int32 Radius) const
 {
 	TArray<FTile> Tiles;
