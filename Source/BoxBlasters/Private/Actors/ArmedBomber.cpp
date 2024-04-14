@@ -14,11 +14,11 @@ bool AArmedBomber::PlaceBomb()
 {
 	CHECK_VALID(Arena);
 	CHECK_VALID(NormalClass);
-	if (IsBombAvailable() && Arena->PlaceBomb(EBombType::Normal, GetCurrentTile(), Power))
+	if (IsBombAvailable() && Arena->PlaceBomb(EBombType::Normal, CurrentTile, Power))
 	{
 		const auto PlacedBomb = GetWorld()->SpawnActor<ABomb>(
 			NormalClass,
-			FTransform{GetCurrentTile().Location()}
+			FTransform{CurrentTile.Location()}
 		);
 		PlacedBomb->SetBomber(this);
 		ConsumeBomb();
@@ -44,11 +44,11 @@ bool AArmedBomber::ActivateSpecial()
 	case ESpecialType::None:
 		break;
 	case ESpecialType::Remote:
-		if (Arena->PlaceBomb(EBombType::Remote, GetCurrentTile(), Power))
+		if (Arena->PlaceBomb(EBombType::Remote, CurrentTile, Power))
 		{
 			const auto PlacedBomb = GetWorld()->SpawnActor<ABomb>(
 				RemoteClass,
-				FTransform{GetCurrentTile().Location()}
+				FTransform{CurrentTile.Location()}
 			);
 			PlacedBomb->SetBomber(this);
 			EquippedSpecial = ESpecialType::None;
@@ -57,11 +57,11 @@ bool AArmedBomber::ActivateSpecial()
 		}
 		break;
 	case ESpecialType::Mine:
-		if (Arena->PlaceBomb(EBombType::Mine, GetCurrentTile(), Power))
+		if (Arena->PlaceBomb(EBombType::Mine, CurrentTile, Power))
 		{
 			const auto PlacedBomb = GetWorld()->SpawnActor<ABomb>(
 				MineClass,
-				FTransform{GetCurrentTile().Location()}
+				FTransform{CurrentTile.Location()}
 			);
 			PlacedBomb->SetBomber(this);
 			EquippedSpecial = ESpecialType::None;
@@ -72,7 +72,7 @@ bool AArmedBomber::ActivateSpecial()
 		{
 			const auto PlacedBomb = GetWorld()->SpawnActor<AAirStrike>(
 				AirClass,
-				FTransform{GetCurrentTile().Location()}
+				FTransform{CurrentTile.Location()}
 			);
 			PlacedBomb->SetBomber(this);
 			EquippedSpecial = ESpecialType::None;

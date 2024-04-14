@@ -19,27 +19,31 @@ class BOXBLASTERS_API ABomber : public APawn
 public:
 	ABomber();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly)
 	AArena* Arena;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int32 Index;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int32 Bombs = 1;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int32 BombsPlaced = 0;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int32 Power = 1;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int32 Speed = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FTile CurrentTile;
 
 protected:
 	virtual void BeginPlay() override;
 public:
+	virtual void Tick(float DeltaTime) override;
 	UFUNCTION(BlueprintCallable)
 	void BombUp();
 	UFUNCTION(BlueprintCallable)
@@ -52,6 +56,4 @@ public:
 	void ReplenishBomb();
 	UFUNCTION(BlueprintPure)
 	bool IsBombAvailable() const;
-	UFUNCTION(BlueprintPure)
-	FTile GetCurrentTile() const;
 };

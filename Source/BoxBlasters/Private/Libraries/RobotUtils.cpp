@@ -1,10 +1,9 @@
 #include "Libraries/RobotUtils.h"
-
 #include "Actors/PopulatedArena.h"
 
 #include <queue>
 
-TArray<ETileState> RequestTileState(AArena* Arena)
+TArray<ETileState> RequestTileState(const AArena* Arena)
 {
 	TArray<ETileState> TileState;
 	TileState.Init(ETileState::Normal, GTotal);
@@ -20,7 +19,7 @@ TArray<ETileState> RequestTileState(AArena* Arena)
 	return TileState;
 }
 
-TArray<ETileInfo> RequestTileInfo(AArena* Arena)
+TArray<ETileInfo> RequestTileInfo(const AArena* Arena)
 {
 	TArray<ETileInfo> TileInfo;
 	TileInfo.Init(ETileInfo::Empty, GTotal);
@@ -69,16 +68,13 @@ TArray<ETileInfo> RequestTileInfo(AArena* Arena)
 	return TileInfo;
 }
 
-TArray<FTile> URobotUtils::Dijkstra(const ABomber* Bomber, const FTile From, const FTile To, const int32 NormalCost, const int32 WarningCost)
+TArray<FTile> URobotUtils::Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost, const int32 WarningCost)
 {
-	CHECK_VALID(Bomber)
-	const auto Arena = Cast<APopulatedArena>(Bomber->Arena);
-	if (!IsValid(Arena)) return {};
+	CHECK_VALID(Arena)
 	TArray<ETileState> TileStateMap = RequestTileState(Arena);
 	for (int32 i = 0; i < 4; ++i)
 	{
-		if (Bomber->Index == i) continue;
-		if (IsValid(Arena->Bombers[i])) TileStateMap[Arena->Bombers[i]->GetCurrentTile().Index()] = ETileState::Blocked;
+		if (IsValid(Arena->Bombers[i])) TileStateMap[Arena->Bombers[i]->CurrentTile.Index()] = ETileState::Blocked;
 	}
 	TArray<FTile> Parent;
 	for (int32 i = 0; i < GTotal; ++i) Parent.Add(IndexTile(i));
@@ -122,7 +118,7 @@ TArray<FTile> URobotUtils::Dijkstra(const ABomber* Bomber, const FTile From, con
 			}
 			else if (TileStateMap[Neighbor.Index()] == ETileState::Warning)
 			{
-				int32 NewCost = CCost + NormalCost;
+				int32 NewCost = CCost + WarningCost;
 				if (NewCost < Cost[Neighbor.Index()])
 				{
 					Parent[Neighbor.Index()] = CTile;
@@ -132,4 +128,18 @@ TArray<FTile> URobotUtils::Dijkstra(const ABomber* Bomber, const FTile From, con
 		}
 	}
 	return {};
+}
+
+bool URobotUtils::IsWarningAt(const AArena* Arena, const FTile Tile)
+{
+	CHECK_VALID(Arena);
+	if (IsValid(Arena->AreaObjectMap[Tile.Index()])) return Arena->AreaObjectMap[Tile.Index()]->Warning;
+	return false;
+}
+
+bool URobotUtils::IsBlockedAt(const AArena* Arena, const FTile Tile)
+{
+	CHECK_VALID(Arena);
+	if (IsValid(Arena->AreaObjectMap[Tile.Index()])) return Arena->AreaObjectMap[Tile.Index()]->Blocked;
+	return true;
 }

@@ -179,7 +179,8 @@ void AArena::UpdateAreaMap()
 		AreaObjectMap[i]->SetBlocked(false);
 		AreaObjectMap[i]->SetWarning(false);
 		if (TileMap[i] != ETileType::Empty ||
-			ExplosionTimerMap[i] >= 0.F)
+			ExplosionTimerMap[i] >= 0.F ||
+			BombTypeMap[i] != EBombType::None)
 			BlockedTiles.AddUnique(IndexTile(i));
 		if (BombTypeMap[i] != EBombType::None)
 		{

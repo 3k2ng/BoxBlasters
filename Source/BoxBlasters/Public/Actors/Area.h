@@ -17,8 +17,8 @@ public:
 	{
 		Blocked = InBlocked;
 	}
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool Warning;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool Blocked;
 };

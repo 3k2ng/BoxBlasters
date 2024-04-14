@@ -7,7 +7,7 @@ void APopulatedArena::Tick(const float DeltaTime)
 	{
 		if (IsValid(Bombers[i]))
 		{
-			if (ExplosionTimerMap[Bombers[i]->GetCurrentTile().Index()] >= 0.F)
+			if (ExplosionTimerMap[Bombers[i]->CurrentTile.Index()] >= 0.F)
 			{
 				Bombers[i]->Destroy();
 				OnBomberHit(i);
@@ -34,6 +34,7 @@ void APopulatedArena::BeginPlay()
 			{
 				Bombers[i]->Arena = this;
 				Bombers[i]->Index = i;
+				Bombers[i]->CurrentTile = Spawns[i].Mod();
 			}
 		}
 	}
@@ -41,7 +42,7 @@ void APopulatedArena::BeginPlay()
 
 bool APopulatedArena::TileHasBomber(const FTile Tile, const int32 Index) const
 {
-	return IsValid(Bombers[Index]) && Bombers[Index]->GetCurrentTile() == Tile;
+	return IsValid(Bombers[Index]) && Bombers[Index]->CurrentTile == Tile;
 }
 
 bool APopulatedArena::TileHasOtherBomber(const FTile Tile, const int32 Index) const

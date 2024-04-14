@@ -144,4 +144,6 @@ class BOXBLASTERS_API UCommonUtils : public UBlueprintFunctionLibrary
 	static FVector GetTileLocation(FTile Tile);
 	UFUNCTION(BlueprintPure)
 	static FTile GetLocationTile(FVector Location);
+	UFUNCTION(BlueprintPure)
+	static bool IsTileEqual(const FTile A, const FTile B) { return A == B; };
 };

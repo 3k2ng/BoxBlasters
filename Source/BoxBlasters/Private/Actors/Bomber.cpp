@@ -18,6 +18,12 @@ void ABomber::BeginPlay()
 	
 }
 
+void ABomber::Tick(const float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	CurrentTile = LocationTile(GetActorLocation());
+}
+
 void ABomber::BombUp()
 {
 	++Bombs;
@@ -47,9 +53,4 @@ void ABomber::ReplenishBomb()
 bool ABomber::IsBombAvailable() const
 {
 	return Bombs > BombsPlaced;
-}
-
-FTile ABomber::GetCurrentTile() const
-{
-	return LocationTile(GetActorLocation());
 }

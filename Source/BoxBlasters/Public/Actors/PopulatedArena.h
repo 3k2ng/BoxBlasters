@@ -15,12 +15,12 @@ public:
 	TSubclassOf<ABomber> BomberClass[4];
 	UPROPERTY(VisibleAnywhere)
 	AArmedBomber* Bombers[4];
-protected:
-	virtual void BeginPlay() override;
 	UFUNCTION(BlueprintPure)
 	bool TileHasBomber(FTile Tile, int32 Index) const;
 	UFUNCTION(BlueprintPure)
 	bool TileHasOtherBomber(FTile Tile, int32 Index) const;
+protected:
+	virtual void BeginPlay() override;
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnBomberHit(int32 Index);
 };

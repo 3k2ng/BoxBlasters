@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "CommonUtils.h"
 #include "Actors/Bomber.h"
+#include "Actors/PopulatedArena.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "RobotUtils.generated.h"
 
@@ -54,5 +55,9 @@ class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 	UFUNCTION(BlueprintPure)
-	static TArray<FTile> Dijkstra(const ABomber* Bomber, const FTile From, const FTile To, const int32 NormalCost, const int32 WarningCost);
+	static TArray<FTile> Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost, const int32 WarningCost);
+	UFUNCTION(BlueprintPure)
+	static bool IsWarningAt(const AArena* Arena, const FTile Tile);
+	UFUNCTION(BlueprintPure)
+	static bool IsBlockedAt(const AArena* Arena, const FTile Tile);
 };
