@@ -77,5 +77,5 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ExplodeAt(FTile Tile);
 	UFUNCTION(BlueprintPure)
-	TArray<FTile> GetBombedTiles(FTile BombTile, int32 BombPower);
+	TArray<FTile> GetBombedTiles(FTile BombTile, int32 BombPower) const;
 };

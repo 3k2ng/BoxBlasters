@@ -47,22 +47,6 @@ enum class ETileState : uint8
 	Blocked UMETA(DisplayName = "Blocked"),
 };
 
-UENUM(BlueprintType)
-enum class ETileInfo : uint8
-{
-	Empty UMETA(DisplayName = "Empty"),
-	Wall UMETA(DisplayName = "Wall"),
-	Basic UMETA(DisplayName = "Basic"),
-	Reinforced UMETA(DisplayName = "Reinforced"),
-	White UMETA(DisplayName = "White"),
-	Red UMETA(DisplayName = "Red"),
-	Green UMETA(DisplayName = "Green"),
-	Blue UMETA(DisplayName = "Blue"),
-	NormalBomb UMETA(DisplayName = "Normal Bomb"),
-	RemoteBomb UMETA(DisplayName = "Remote Bomb"),
-	Mine UMETA(DisplayName = "Mine"),
-};
-
 UCLASS(BlueprintType)
 class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 {
@@ -73,4 +57,24 @@ class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 	static bool IsWarningAt(const AArena* Arena, const FTile Tile);
 	UFUNCTION(BlueprintPure)
 	static bool IsBlockedAt(const AArena* Arena, const FTile Tile);
+	UFUNCTION(BlueprintPure)
+	static int32 GetDistance(const FTile From, const FTile To);
+	UFUNCTION(BlueprintPure)
+	static TArray<FTile> FindBoxes(const AArena* Arena, const bool IncludeWhite, const bool IncludeRed, const bool IncludeGreen, const bool IncludeBlue);
+	UFUNCTION(BlueprintPure)
+	static EBombType GetBombType(const AArena* Arena, const FTile Target);
+	UFUNCTION(BlueprintPure)
+	static TArray<FTile> GetReachableTiles(const APopulatedArena* Arena, const FTile From, const bool NoWarning);
+	UFUNCTION(BlueprintPure)
+	static FResult GetNearestTile(const FTile From, const TArray<FTile>& To);
+	UFUNCTION(BlueprintPure)
+	static TArray<FTile> BombSpotsToHit(const ABomber* Bomber, const FTile Target);
+	UFUNCTION(BlueprintPure)
+	static TArray<FTile> GetPotentialBombEscapes(const ABomber* Bomber, const FTile Target);
+	UFUNCTION(BlueprintPure)
+	static TArray<FTile> GetCurrentBombEscapes(const ABomber* Bomber);
+	UFUNCTION(BlueprintPure)
+	static FResult BestBombSpotsToReach(const ABomber* Bomber, const FTile Target);
+	UFUNCTION(BlueprintPure)
+	static bool CanReachTile(const ABomber* Bomber, const FTile Target, const bool NoWarning);
 };

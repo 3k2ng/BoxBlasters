@@ -222,7 +222,7 @@ void AArena::ExplodeAt(const FTile Tile)
 	}
 }
 
-TArray<FTile> AArena::GetBombedTiles(const FTile BombTile, const int32 BombPower)
+TArray<FTile> AArena::GetBombedTiles(const FTile BombTile, const int32 BombPower) const
 {
 	TArray<FTile> BombedTiles;
 	if (TileMap[BombTile.Index()] == ETileType::Wall) return BombedTiles;

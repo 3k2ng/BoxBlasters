@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Libraries/CommonUtils.h"
 #include "GameFramework/Actor.h"
 #include "PickUp.generated.h"
 
@@ -23,10 +24,12 @@ UCLASS()
 class BOXBLASTERS_API APickUp : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	EPickUpType Type;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	EPickUpColor Color;
+	UFUNCTION(BlueprintPure)
+	FTile GetCurrentTile() const { return LocationTile(GetActorLocation()); };
 };
