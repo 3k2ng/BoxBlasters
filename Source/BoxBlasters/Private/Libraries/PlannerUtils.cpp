@@ -88,5 +88,20 @@ FRobotState UPlannerUtils::QueryState(const AArmedBomber* Bomber)
 		RobotState.AddRobotCond(ERobotCond::HasAir);
 		break;
 	}
+	const auto TileStateMap = RequestTileState(Arena);
+	const auto ReachableTiles = RequestReachableTiles(TileStateMap, Bomber->CurrentTile, false);
+	for (int32 i = 0; i < GTotal; ++i)
+	{
+		if (TileStateMap[i] == ETileState::Normal) RobotState.AddTileCond(IndexTile(i), ETileCond::Safe);
+		if (ReachableTiles.Contains(IndexTile(i))) RobotState.AddTileCond(IndexTile(i), ETileCond::Reachable);
+	}
+	for (int32 i = 0; i < 4; ++i)
+	{
+		if (IsValid(Arena->Bombers[i]))
+		{
+			RobotState.AddEnemyCond(i, EEnemyCond::Alive);
+			if (i != Bomber->Index) RobotState.AddEnemyCond(i, EEnemyCond::IsEnemy);
+		}
+	}
 	return RobotState;
 }
