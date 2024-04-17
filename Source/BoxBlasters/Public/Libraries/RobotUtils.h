@@ -47,6 +47,27 @@ enum class ETileState : uint8
 	Blocked UMETA(DisplayName = "Blocked"),
 };
 
+TArray<ETileState> RequestTileState(const AArena* Arena);
+TArray<FTile> RequestReachableTiles(const TArray<ETileState>& TileStateMap, const FTile From, const bool Safe = true);
+FResult RequestLeastCostTile(const TArray<ETileState>& TileStateMap, const FTile From, const TArray<FTile>& To,
+							 const int32 NormalCost, const int32 WarningCost);
+
+struct FPathFindStep
+{
+	int32 Cost;
+	FTile Target;
+	FTile Origin;
+
+	FPathFindStep(const int32 InCost,
+				  const FTile InTarget,
+				  const FTile InOrigin) : Cost(InCost), Target(InTarget), Origin(InOrigin) {}
+};
+
+inline bool operator<(FPathFindStep const& A, FPathFindStep const& B)
+{
+	return A.Cost > B.Cost;
+}
+
 UCLASS(BlueprintType)
 class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 {
@@ -64,7 +85,7 @@ class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintPure)
 	static EBombType GetBombType(const AArena* Arena, const FTile Target);
 	UFUNCTION(BlueprintPure)
-	static TArray<FTile> GetReachableTiles(const APopulatedArena* Arena, const FTile From, const bool NoWarning);
+	static TArray<FTile> GetReachableTiles(const APopulatedArena* Arena, const FTile From, const bool Safe);
 	UFUNCTION(BlueprintPure)
 	static FResult GetNearestTile(const FTile From, const TArray<FTile>& To);
 	UFUNCTION(BlueprintPure)
@@ -76,5 +97,5 @@ class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintPure)
 	static FResult BestBombSpotsToReach(const ABomber* Bomber, const FTile Target);
 	UFUNCTION(BlueprintPure)
-	static bool CanReachTile(const ABomber* Bomber, const FTile Target, const bool NoWarning);
+	static bool CanReachTile(const ABomber* Bomber, const FTile Target, const bool Safe);
 };

@@ -19,7 +19,7 @@ TArray<ETileState> RequestTileState(const AArena* Arena)
 	return TileStateMap;
 }
 
-TArray<FTile> RequestReachableTiles(const TArray<ETileState>& TileStateMap, const FTile From, const bool NoWarning = true)
+TArray<FTile> RequestReachableTiles(const TArray<ETileState>& TileStateMap, const FTile From, const bool Safe = true)
 {
 	TArray<FTile> ReachableTiles;
 	TArray<bool> Visited;
@@ -35,7 +35,7 @@ TArray<FTile> RequestReachableTiles(const TArray<ETileState>& TileStateMap, cons
 		for (const FTile Neighbor : Current.Neighbors())
 		{
 			if ((TileStateMap[Neighbor.Index()] == ETileState::Normal) ||
-				(!NoWarning && TileStateMap[Neighbor.Index()] == ETileState::Warning))
+				(!Safe && TileStateMap[Neighbor.Index()] == ETileState::Warning))
 			{
 				ReachableTiles.Add(Neighbor);
 				ToVisit.push(Neighbor);
@@ -45,22 +45,49 @@ TArray<FTile> RequestReachableTiles(const TArray<ETileState>& TileStateMap, cons
 	return ReachableTiles;
 }
 
-struct FPathFindStep
+FResult RequestLeastCostTile(const TArray<ETileState>& TileStateMap, const FTile From, const TArray<FTile>& To,
+                             const int32 NormalCost, const int32 WarningCost
+)
 {
-	int32 Cost;
-	FTile Target;
-	FTile Origin;
-
-	FPathFindStep(const int32 InCost,
-	              const FTile InTarget,
-	              const FTile InOrigin) : Cost(InCost), Target(InTarget), Origin(InOrigin)
+	if (To.Num() > 0)
 	{
+		TArray<int32> Cost;
+		Cost.Init(MAX_int32, GTotal);
+		std::priority_queue<std::pair<int32, FTile>, std::vector<std::pair<int32, FTile>>, std::greater<>> ToVisit;
+		ToVisit.emplace(0, From);
+		while (!ToVisit.empty())
+		{
+			const int32 CurrentCost = ToVisit.top().first;
+			const FTile CurrentTile = ToVisit.top().second;
+			ToVisit.pop();
+			if (CurrentCost > Cost[CurrentTile.Index()]) continue;
+			Cost[CurrentTile.Index()] = CurrentCost;
+			if (To.Contains(CurrentTile))
+			{
+				return FResult::Success(CurrentTile);
+			}
+			for (const FTile Neighbor : CurrentTile.Neighbors())
+			{
+				if (TileStateMap[Neighbor.Index()] == ETileState::Normal)
+				{
+					int32 NewCost = CurrentCost + NormalCost;
+					if (NewCost < Cost[Neighbor.Index()])
+					{
+						ToVisit.emplace(NewCost, Neighbor);
+					}
+				}
+				else if (TileStateMap[Neighbor.Index()] == ETileState::Warning)
+				{
+					int32 NewCost = CurrentCost + WarningCost;
+					if (NewCost < Cost[Neighbor.Index()])
+					{
+						ToVisit.emplace(NewCost, Neighbor);
+					}
+				}
+			}
+		}
 	}
-};
-
-inline bool operator<(FPathFindStep const& A, FPathFindStep const& B)
-{
-	return A.Cost > B.Cost;
+	return FResult::Fail();
 }
 
 FResult URobotUtils::Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost,
@@ -173,7 +200,7 @@ EBombType URobotUtils::GetBombType(const AArena* Arena, const FTile Target)
 	return Arena->BombTypeMap[Target.Index()];
 }
 
-TArray<FTile> URobotUtils::GetReachableTiles(const APopulatedArena* Arena, const FTile From, const bool NoWarning = true)
+TArray<FTile> URobotUtils::GetReachableTiles(const APopulatedArena* Arena, const FTile From, const bool Safe = true)
 {
 	CHECK_VALID(Arena);
 	TArray<ETileState> TileStateMap = RequestTileState(Arena);
@@ -181,7 +208,7 @@ TArray<FTile> URobotUtils::GetReachableTiles(const APopulatedArena* Arena, const
 	{
 		if (IsValid(Arena->Bombers[i])) TileStateMap[Arena->Bombers[i]->CurrentTile.Index()] = ETileState::Blocked;
 	}
-	return RequestReachableTiles(TileStateMap, From, NoWarning);
+	return RequestReachableTiles(TileStateMap, From, Safe);
 }
 
 FResult URobotUtils::GetNearestTile(const FTile From, const TArray<FTile>& To)
@@ -233,7 +260,8 @@ TArray<FTile> URobotUtils::GetPotentialBombEscapes(const ABomber* Bomber, const 
 	TArray<ETileState> TileStateMap = RequestTileState(Arena);
 	for (int32 i = 0; i < 4; ++i)
 	{
-		if (i != Bomber->Index && IsValid(Arena->Bombers[i])) TileStateMap[Arena->Bombers[i]->CurrentTile.Index()] = ETileState::Blocked;
+		if (i != Bomber->Index && IsValid(Arena->Bombers[i])) TileStateMap[Arena->Bombers[i]->CurrentTile.Index()] =
+			ETileState::Blocked;
 	}
 	for (const FTile BombedTile : Arena->GetBombedTiles(Target, Bomber->Power))
 	{
@@ -257,7 +285,8 @@ TArray<FTile> URobotUtils::GetCurrentBombEscapes(const ABomber* Bomber)
 	TArray<ETileState> TileStateMap = RequestTileState(Arena);
 	for (int32 i = 0; i < 4; ++i)
 	{
-		if (i != Bomber->Index && IsValid(Arena->Bombers[i])) TileStateMap[Arena->Bombers[i]->CurrentTile.Index()] = ETileState::Blocked;
+		if (i != Bomber->Index && IsValid(Arena->Bombers[i])) TileStateMap[Arena->Bombers[i]->CurrentTile.Index()] =
+			ETileState::Blocked;
 	}
 	TArray<FTile> BombEscapes;
 	for (const FTile BombEscape : RequestReachableTiles(TileStateMap, Bomber->CurrentTile, false))
@@ -307,11 +336,11 @@ FResult URobotUtils::BestBombSpotsToReach(const ABomber* Bomber, const FTile Tar
 	return FResult::Fail();
 }
 
-bool URobotUtils::CanReachTile(const ABomber* Bomber, const FTile Target, const bool NoWarning = true)
+bool URobotUtils::CanReachTile(const ABomber* Bomber, const FTile Target, const bool Safe = true)
 {
 	CHECK_VALID(Bomber);
 	CHECK_VALID(Bomber->Arena);
 	const APopulatedArena* Arena = Cast<APopulatedArena>(Bomber->Arena);
 	CHECK_VALID(Arena);
-	return GetReachableTiles(Arena, Bomber->CurrentTile, NoWarning).Contains(Target);
+	return GetReachableTiles(Arena, Bomber->CurrentTile, Safe).Contains(Target);
 }
