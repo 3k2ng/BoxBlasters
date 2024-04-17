@@ -21,6 +21,4 @@ public:
 	bool TileHasOtherBomber(FTile Tile, int32 Index) const;
 protected:
 	virtual void BeginPlay() override;
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnBomberHit(int32 Index);
 };
