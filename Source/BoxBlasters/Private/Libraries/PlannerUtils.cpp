@@ -94,6 +94,45 @@ FRobotState UPlannerUtils::QueryState(const AArmedBomber* Bomber)
 	{
 		if (TileStateMap[i] == ETileState::Normal) RobotState.AddTileCond(IndexTile(i), ETileCond::Safe);
 		if (ReachableTiles.Contains(IndexTile(i))) RobotState.AddTileCond(IndexTile(i), ETileCond::Reachable);
+		switch (Arena->TileMap[i]) {
+		case ETileType::Empty:
+			RobotState.AddTileCond(IndexTile(i), ETileCond::Empty);
+			break;
+		case ETileType::Wall:
+			RobotState.AddTileCond(IndexTile(i), ETileCond::Wall);
+			break;
+		case ETileType::Basic:
+			RobotState.AddTileCond(IndexTile(i), ETileCond::Basic);
+			break;
+		case ETileType::Reinforced:
+			RobotState.AddTileCond(IndexTile(i), ETileCond::Reinforced);
+			break;
+		case ETileType::White:
+			RobotState.AddTileCond(IndexTile(i), ETileCond::White);
+			break;
+		case ETileType::Red:
+			RobotState.AddTileCond(IndexTile(i), ETileCond::Red);
+			break;
+		case ETileType::Green:
+			RobotState.AddTileCond(IndexTile(i), ETileCond::Green);
+			break;
+		case ETileType::Blue:
+			RobotState.AddTileCond(IndexTile(i), ETileCond::Blue);
+			break;
+		}
+		switch (Arena->BombTypeMap[i]) {
+		case EBombType::None:
+			break;
+		case EBombType::Normal:
+			RobotState.AddTileCond(IndexTile(i), ETileCond::HasBomb);
+			break;
+		case EBombType::Remote:
+			RobotState.AddTileCond(IndexTile(i), ETileCond::HasRemote);
+			break;
+		case EBombType::Mine:
+			RobotState.AddTileCond(IndexTile(i), ETileCond::HasMine);
+			break;
+		}
 	}
 	for (int32 i = 0; i < 4; ++i)
 	{

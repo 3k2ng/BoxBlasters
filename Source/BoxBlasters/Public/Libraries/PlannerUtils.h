@@ -33,12 +33,14 @@ enum class ETileCond : uint8
 	InRemoteRange UMETA(DisplayName = "In Remote Range"),
 	InAirRange UMETA(DisplayName = "In Air Range"),
 	Empty UMETA(DisplayName = "Empty"),
+	Wall UMETA(DisplayName = "Wall"),
 	Basic UMETA(DisplayName = "Basic"),
 	Reinforced UMETA(DisplayName = "Reinforced"),
 	White UMETA(DisplayName = "White"),
 	Red UMETA(DisplayName = "Red"),
 	Green UMETA(DisplayName = "Green"),
 	Blue UMETA(DisplayName = "Blue"),
+	HasPlayer UMETA(DisplayName = "Has Player"),
 	HasBomb UMETA(DisplayName = "Has Bomb"),
 	HasRemote UMETA(DisplayName = "Has Remote"),
 	HasMine UMETA(DisplayName = "Has Mine"),
@@ -142,5 +144,6 @@ UCLASS()
 class BOXBLASTERS_API UPlannerUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+	UFUNCTION(BlueprintPure)
 	static FRobotState QueryState(const AArmedBomber* Bomber);
 };
