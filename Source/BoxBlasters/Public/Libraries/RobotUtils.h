@@ -75,6 +75,7 @@ UCLASS(BlueprintType)
 class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+public:
 	UFUNCTION(BlueprintPure)
 	static FMaybeTile Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost, const int32 WarningCost);
 	UFUNCTION(BlueprintPure)

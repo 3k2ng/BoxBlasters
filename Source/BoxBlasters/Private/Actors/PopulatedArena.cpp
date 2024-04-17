@@ -10,7 +10,6 @@ void APopulatedArena::Tick(const float DeltaTime)
 			if (ExplosionTimerMap[Bombers[i]->CurrentTile.Index()] >= 0.F)
 			{
 				Bombers[i]->Destroy();
-				OnBomberHit(i);
 			}
 		}
 	}

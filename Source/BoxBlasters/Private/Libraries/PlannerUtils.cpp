@@ -64,3 +64,29 @@ FRobotState FRobotPlan::Transform(const FRobotState& InState) const
 	}
 	return NewState;
 }
+
+FRobotState UPlannerUtils::QueryState(const AArmedBomber* Bomber)
+{
+	CHECK_VALID(Bomber);
+	CHECK_VALID(Bomber->Arena);
+	const APopulatedArena* Arena = Cast<APopulatedArena>(Bomber->Arena);
+	CHECK_VALID(Arena);
+	FRobotState RobotState;
+	if (!URobotUtils::IsWarningAt(Arena, Bomber->CurrentTile)) RobotState.AddRobotCond(ERobotCond::Safe);
+	if (Bomber->IsBombAvailable()) RobotState.AddRobotCond(ERobotCond::HasBomb);
+	switch (Bomber->EquippedSpecial)
+	{
+	case ESpecialType::None:
+		break;
+	case ESpecialType::Remote:
+		RobotState.AddRobotCond(ERobotCond::HasRemote);
+		break;
+	case ESpecialType::Mine:
+		RobotState.AddRobotCond(ERobotCond::HasMine);
+		break;
+	case ESpecialType::Air:
+		RobotState.AddRobotCond(ERobotCond::HasAir);
+		break;
+	}
+	return RobotState;
+}

@@ -140,6 +140,7 @@ UCLASS()
 class BOXBLASTERS_API UCommonUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+public:
 	UFUNCTION(BlueprintPure)
 	static FVector GetTileLocation(FTile Tile);
 	UFUNCTION(BlueprintPure)

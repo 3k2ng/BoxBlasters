@@ -14,9 +14,6 @@ enum class ERobotCond : uint8
 	HasRemote UMETA(DisplayName = "Has Remote"),
 	HasMine UMETA(DisplayName = "Has Mine"),
 	HasAir UMETA(DisplayName = "Has Air"),
-	SufficientPower UMETA(DisplayName = "Sufficient Power"),
-	SufficientBombs UMETA(DisplayName = "Sufficient Bombs"),
-	SufficientSpeed UMETA(DisplayName = "Sufficient Speed"),
 };
 
 USTRUCT(BlueprintType)
@@ -45,6 +42,12 @@ enum class ETileCond : uint8
 	HasBomb UMETA(DisplayName = "Has Bomb"),
 	HasRemote UMETA(DisplayName = "Has Remote"),
 	HasMine UMETA(DisplayName = "Has Mine"),
+	HasRedSpecial UMETA(DisplayName = "Has Red Special"),
+	HasGreenSpecial UMETA(DisplayName = "Has Green Special"),
+	HasBlueSpecial UMETA(DisplayName = "Has Blue Special"),
+	HasRedUpgrade UMETA(DisplayName = "Has Red Upgrade"),
+	HasGreenUpgrade UMETA(DisplayName = "Has Green Upgrade"),
+	HasBlueUpgrade UMETA(DisplayName = "Has Blue Upgrade"),
 };
 
 USTRUCT(BlueprintType)
@@ -83,6 +86,26 @@ struct FRobotState
 	TArray<FTileCondSet> TileCond;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TArray<FEnemyCondSet> EnemyCond;
+	FRobotState()
+	{
+		RobotCond = {};
+		TileCond.Init({}, GTotal);
+		EnemyCond.Init({}, 4);
+	}
+	void AddRobotCond(const ERobotCond InCond)
+	{
+		RobotCond.CondSet.AddUnique(InCond);
+	}
+
+	void AddTileCond(const FTile Tile, const ETileCond InCond)
+	{
+		TileCond[Tile.Index()].CondSet.AddUnique(InCond);
+	}
+
+	void AddEnemyCond(const int32 Index, const EEnemyCond InCond)
+	{
+		EnemyCond[Index].CondSet.AddUnique(InCond);
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -119,4 +142,5 @@ UCLASS()
 class BOXBLASTERS_API UPlannerUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+	static FRobotState QueryState(const AArmedBomber* Bomber);
 };
