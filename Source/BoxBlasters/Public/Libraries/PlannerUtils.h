@@ -24,9 +24,23 @@ struct FRobotPlan
 	TArray<FRobotTask> TaskList;
 };
 
+USTRUCT(BlueprintType)
+struct FMaybePlan
+{
+	GENERATED_BODY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool HasPlan;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FRobotPlan JustPlan;
+
+	static FMaybePlan None() { return {false, {}}; }
+	static FMaybePlan Just(const FRobotPlan& InPlan) { return {true, InPlan}; }
+};
+
 UCLASS()
 class BOXBLASTERS_API UPlannerUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
-	
+	UFUNCTION(BlueprintPure)
+	static FMaybePlan BestPlan(const TArray<FRobotPlan>& Plans);
 };

@@ -8,23 +8,24 @@
 #include "RobotUtils.generated.h"
 
 USTRUCT(BlueprintType)
-struct FResult
+struct FMaybeTile
 {
 	GENERATED_BODY()
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool IsSuccess;
+	bool HasTile;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	FTile Target;
+	FTile JustTile;
 
-	static FResult Fail() { return {false, {}}; }
-	static FResult Success(const FTile InTarget) { return {true, InTarget}; }
+	static FMaybeTile None() { return {false, {}}; }
+	static FMaybeTile Just(const FTile InTarget) { return {true, InTarget}; }
 };
 
 UENUM(BlueprintType)
 enum class ERobotTaskType : uint8
 {
 	Move UMETA(DisplayName = "Move"),
-	MoveSpecial UMETA(DisplayName = "Move Special"),
+	Wait UMETA(DisplayName = "Wait"),
+	Strike UMETA(DisplayName = "Strike"),
 	Bomb UMETA(DisplayName = "Bomb"),
 	Special UMETA(DisplayName = "Special"),
 };
@@ -51,7 +52,7 @@ TArray<ETileState> RequestTileState(const AArena* Arena);
 TArray<FTile> RequestReachableTiles(const TArray<ETileState>& TileStateMap, const FTile From, const bool Safe);
 int32 RequestTileCost(const TArray<ETileState>& TileStateMap, const FTile From, const FTile To,
 					  const int32 NormalCost, const int32 WarningCost);
-FResult RequestLeastCostTile(const TArray<ETileState>& TileStateMap, const FTile From, const TArray<FTile>& To,
+FMaybeTile RequestLeastCostTile(const TArray<ETileState>& TileStateMap, const FTile From, const TArray<FTile>& To,
 							 const int32 NormalCost, const int32 WarningCost);
 
 struct FPathFindStep
@@ -75,7 +76,7 @@ class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 	UFUNCTION(BlueprintPure)
-	static FResult Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost, const int32 WarningCost);
+	static FMaybeTile Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost, const int32 WarningCost);
 	UFUNCTION(BlueprintPure)
 	static bool IsWarningAt(const AArena* Arena, const FTile Tile);
 	UFUNCTION(BlueprintPure)
@@ -89,7 +90,7 @@ class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintPure)
 	static TArray<FTile> GetReachableTiles(const APopulatedArena* Arena, const FTile From, const bool Safe);
 	UFUNCTION(BlueprintPure)
-	static FResult GetNearestTile(const FTile From, const TArray<FTile>& To);
+	static FMaybeTile GetNearestTile(const FTile From, const TArray<FTile>& To);
 	UFUNCTION(BlueprintPure)
 	static TArray<FTile> BombSpotsToHit(const ABomber* Bomber, const FTile Target);
 	UFUNCTION(BlueprintPure)

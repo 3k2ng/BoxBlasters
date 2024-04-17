@@ -83,7 +83,7 @@ int32 RequestTileCost(const TArray<ETileState>& TileStateMap, const FTile From, 
 	return MAX_int32;
 }
 
-FResult RequestLeastCostTile(const TArray<ETileState>& TileStateMap, const FTile From, const TArray<FTile>& To,
+FMaybeTile RequestLeastCostTile(const TArray<ETileState>& TileStateMap, const FTile From, const TArray<FTile>& To,
                              const int32 NormalCost, const int32 WarningCost)
 {
 	if (To.Num() > 0)
@@ -101,7 +101,7 @@ FResult RequestLeastCostTile(const TArray<ETileState>& TileStateMap, const FTile
 			Cost[CurrentTile.Index()] = CurrentCost;
 			if (To.Contains(CurrentTile))
 			{
-				return FResult::Success(CurrentTile);
+				return FMaybeTile::Just(CurrentTile);
 			}
 			for (const FTile Neighbor : CurrentTile.Neighbors())
 			{
@@ -124,10 +124,10 @@ FResult RequestLeastCostTile(const TArray<ETileState>& TileStateMap, const FTile
 			}
 		}
 	}
-	return FResult::Fail();
+	return FMaybeTile::None();
 }
 
-FResult URobotUtils::Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost,
+FMaybeTile URobotUtils::Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost,
                               const int32 WarningCost)
 {
 	CHECK_VALID(Arena)
@@ -160,7 +160,7 @@ FResult URobotUtils::Dijkstra(const APopulatedArena* Arena, const FTile From, co
 		Cost[Current.Target.Index()] = Current.Cost;
 		if (Current.Target == To)
 		{
-			return FResult::Success(Current.Origin);
+			return FMaybeTile::Just(Current.Origin);
 		}
 		for (const FTile Neighbor : Current.Target.Neighbors())
 		{
@@ -182,7 +182,7 @@ FResult URobotUtils::Dijkstra(const APopulatedArena* Arena, const FTile From, co
 			}
 		}
 	}
-	return FResult::Fail();
+	return FMaybeTile::None();
 }
 
 bool URobotUtils::IsWarningAt(const AArena* Arena, const FTile Tile)
@@ -246,7 +246,7 @@ TArray<FTile> URobotUtils::GetReachableTiles(const APopulatedArena* Arena, const
 	return RequestReachableTiles(TileStateMap, From, Safe);
 }
 
-FResult URobotUtils::GetNearestTile(const FTile From, const TArray<FTile>& To)
+FMaybeTile URobotUtils::GetNearestTile(const FTile From, const TArray<FTile>& To)
 {
 	if (To.Num() > 0)
 	{
@@ -262,9 +262,9 @@ FResult URobotUtils::GetNearestTile(const FTile From, const TArray<FTile>& To)
 				MinDistance = CurrentDistance;
 			}
 		}
-		return FResult::Success(NearestTile);
+		return FMaybeTile::Just(NearestTile);
 	}
-	return FResult::Fail();
+	return FMaybeTile::None();
 }
 
 TArray<FTile> URobotUtils::BombSpotsToHit(const ABomber* Bomber, const FTile Target)
