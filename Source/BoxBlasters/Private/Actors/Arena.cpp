@@ -58,10 +58,15 @@ AArena::AArena()
 	                                      FAttachmentTransformRules{EAttachmentRule::KeepRelative, false});
 	InstancedExplosion->SetMobility(EComponentMobility::Static);
 	InstancedExplosion->SetCollisionProfileName("NoCollision");
+	InstancedWarning = CreateDefaultSubobject<UInstancedStaticMeshComponent>("WarningComponent");
+	InstancedWarning->AttachToComponent(RootComponent,
+	                                      FAttachmentTransformRules{EAttachmentRule::KeepRelative, false});
+	InstancedWarning->SetMobility(EComponentMobility::Static);
+	InstancedWarning->SetCollisionProfileName("NoCollision");
 	TileMap = DefaultMap();
 	LootMap.Init(ELootType::None, GTotal);
 	BoxInstanceMap.Init(-1, GTotal);
-	AreaObjectMap.Init(nullptr, GTotal);
+	WarningMap.Init(false, GTotal);
 	ExplosionTimerMap.Init(-1.F, GTotal);
 	BombTypeMap.Init(EBombType::None, GTotal);
 	BombPowerMap.Init(0, GTotal);
@@ -76,23 +81,13 @@ void AArena::BeginPlay()
 	CHECK_VALID(InstancedWall->GetStaticMesh());
 	CHECK_VALID(InstancedBox->GetStaticMesh());
 	CHECK_VALID(InstancedExplosion->GetStaticMesh());
-	CHECK_VALID(AreaClass);
+	CHECK_VALID(InstancedWarning->GetStaticMesh());
 	CHECK_VALID(RedUpgrade);
 	CHECK_VALID(GreenUpgrade);
 	CHECK_VALID(BlueUpgrade);
 	CHECK_VALID(RedSpecial);
 	CHECK_VALID(GreenSpecial);
 	CHECK_VALID(BlueSpecial);
-	for (int i = 0; i < GTotal; ++i)
-	{
-		if (TileMap[i] != ETileType::Wall)
-		{
-			AreaObjectMap[i] = GetWorld()->SpawnActor<AArea>(
-				AreaClass,
-				FTransform{IndexTile(i).Location()}
-			);
-		}
-	}
 	GenerateTiles(TileMap, LootMap, TileGen);
 	UpdateBoxes();
 }
@@ -170,18 +165,13 @@ void AArena::UpdateBoxes()
 	}
 }
 
-void AArena::UpdateAreaMap()
+void AArena::UpdateWarning()
 {
-	TArray<FTile> BlockedTiles, WarningTiles;
+	InstancedWarning->ClearInstances();
+	TArray<FTile> WarningTiles;
 	for (int i = 0; i < GTotal; ++i)
 	{
-		if (!IsValid(AreaObjectMap[i])) continue;;
-		AreaObjectMap[i]->SetBlocked(false);
-		AreaObjectMap[i]->SetWarning(false);
-		if (TileMap[i] != ETileType::Empty ||
-			ExplosionTimerMap[i] >= 0.F ||
-			BombTypeMap[i] != EBombType::None)
-			BlockedTiles.AddUnique(IndexTile(i));
+		WarningMap[i] = false;
 		if (BombTypeMap[i] != EBombType::None)
 		{
 			for (const FTile BombedTile : GetBombedTiles(IndexTile(i), BombPowerMap[i]))
@@ -200,14 +190,7 @@ void AArena::UpdateAreaMap()
 			}
 		}
 	}
-	for (const FTile BlockedTile : BlockedTiles)
-	{
-		if (IsValid(AreaObjectMap[BlockedTile.Index()])) AreaObjectMap[BlockedTile.Index()]->SetBlocked(true);
-	}
-	for (const FTile WarningTile : WarningTiles)
-	{
-		if (IsValid(AreaObjectMap[WarningTile.Index()])) AreaObjectMap[WarningTile.Index()]->SetWarning(true);
-	}
+	for (const FTile WarningTile : WarningTiles) InstancedWarning->AddInstance(FTransform{WarningTile.Location()});
 }
 
 void AArena::ExplodeAt(const FTile Tile)
@@ -269,7 +252,7 @@ void AArena::Tick(const float DeltaTime)
 			ExplosionTimerMap[i] -= DeltaTime;
 		}
 	}
-	UpdateAreaMap();
+	UpdateWarning();
 }
 
 bool AArena::PlaceBomb(const EBombType BombType, const FTile BombTile, const int32 BombPower)

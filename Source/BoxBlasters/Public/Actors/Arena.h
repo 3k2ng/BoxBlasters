@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Actors/PickUp.h"
-#include "Actors/Area.h"
 #include "Libraries/CommonUtils.h"
 #include "Libraries/TileGen.h"
 #include "GameFramework/Actor.h"
@@ -17,11 +16,11 @@ class BOXBLASTERS_API AArena : public AActor
 	UPROPERTY(EditDefaultsOnly)
 	UInstancedStaticMeshComponent* InstancedBox;
 	UPROPERTY(EditDefaultsOnly)
+	UInstancedStaticMeshComponent* InstancedWarning;
+	UPROPERTY(EditDefaultsOnly)
 	UInstancedStaticMeshComponent* InstancedExplosion;
 	UPROPERTY(EditAnywhere)
 	ETileGen TileGen;
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<AArea> AreaClass;
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<APickUp> RedUpgrade;
 	UPROPERTY(EditDefaultsOnly)
@@ -43,7 +42,7 @@ public:
 	UPROPERTY()
 	TArray<int32> BoxInstanceMap;
 	UPROPERTY()
-	TArray<AArea*> AreaObjectMap;
+	TArray<bool> WarningMap;
 	UPROPERTY()
 	TArray<float> ExplosionTimerMap;
 	UPROPERTY()
@@ -61,7 +60,7 @@ protected:
 	virtual void OnConstruction(const FTransform & Transform) override;
 	void AddBox(FTile Tile, ETileType BoxType);
 	void UpdateBoxes();
-	void UpdateAreaMap();
+	void UpdateWarning();
 public:
 	virtual void Tick(float DeltaTime) override;
 	UFUNCTION(BlueprintCallable)

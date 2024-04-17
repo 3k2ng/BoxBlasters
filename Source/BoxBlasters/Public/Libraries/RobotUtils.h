@@ -48,7 +48,9 @@ enum class ETileState : uint8
 };
 
 TArray<ETileState> RequestTileState(const AArena* Arena);
-TArray<FTile> RequestReachableTiles(const TArray<ETileState>& TileStateMap, const FTile From, const bool Safe = true);
+TArray<FTile> RequestReachableTiles(const TArray<ETileState>& TileStateMap, const FTile From, const bool Safe);
+int32 RequestTileCost(const TArray<ETileState>& TileStateMap, const FTile From, const FTile To,
+					  const int32 NormalCost, const int32 WarningCost);
 FResult RequestLeastCostTile(const TArray<ETileState>& TileStateMap, const FTile From, const TArray<FTile>& To,
 							 const int32 NormalCost, const int32 WarningCost);
 
@@ -94,8 +96,6 @@ class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 	static TArray<FTile> GetPotentialBombEscapes(const ABomber* Bomber, const FTile Target);
 	UFUNCTION(BlueprintPure)
 	static TArray<FTile> GetCurrentBombEscapes(const ABomber* Bomber);
-	UFUNCTION(BlueprintPure)
-	static FResult BestBombSpotsToReach(const ABomber* Bomber, const FTile Target);
 	UFUNCTION(BlueprintPure)
 	static bool CanReachTile(const ABomber* Bomber, const FTile Target, const bool Safe);
 };
