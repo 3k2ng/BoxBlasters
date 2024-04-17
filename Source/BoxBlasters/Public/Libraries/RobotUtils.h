@@ -7,6 +7,19 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "RobotUtils.generated.h"
 
+USTRUCT(BlueprintType)
+struct FResult
+{
+	GENERATED_BODY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool IsSuccess;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FTile Target;
+
+	static FResult Fail() { return {false, {}}; }
+	static FResult Success(const FTile InTarget) { return {true, InTarget}; }
+};
+
 UENUM(BlueprintType)
 enum class ERobotTaskType : uint8
 {
@@ -55,7 +68,7 @@ class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 	UFUNCTION(BlueprintPure)
-	static TArray<FTile> Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost, const int32 WarningCost);
+	static FResult Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost, const int32 WarningCost);
 	UFUNCTION(BlueprintPure)
 	static bool IsWarningAt(const AArena* Arena, const FTile Tile);
 	UFUNCTION(BlueprintPure)

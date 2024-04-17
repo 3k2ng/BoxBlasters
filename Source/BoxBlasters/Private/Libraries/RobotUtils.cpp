@@ -25,9 +25,11 @@ TArray<ETileInfo> RequestTileInfo(const AArena* Arena)
 	TileInfo.Init(ETileInfo::Empty, GTotal);
 	for (int i = 0; i < GTotal; ++i)
 	{
-		switch (Arena->TileMap[i]) {
+		switch (Arena->TileMap[i])
+		{
 		case ETileType::Empty:
-			switch (Arena->BombTypeMap[i]) {
+			switch (Arena->BombTypeMap[i])
+			{
 			case EBombType::None:
 				TileInfo[i] = ETileInfo::Empty;
 				break;
@@ -68,7 +70,26 @@ TArray<ETileInfo> RequestTileInfo(const AArena* Arena)
 	return TileInfo;
 }
 
-TArray<FTile> URobotUtils::Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost, const int32 WarningCost)
+struct FPathFindStep
+{
+	int32 Cost;
+	FTile Target;
+	FTile Origin;
+
+	FPathFindStep(const int32 InCost,
+	              const FTile InTarget,
+	              const FTile InOrigin) : Cost(InCost), Target(InTarget), Origin(InOrigin)
+	{
+	}
+};
+
+inline bool operator<(FPathFindStep const& A, FPathFindStep const& B)
+{
+	return A.Cost > B.Cost;
+}
+
+FResult URobotUtils::Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost,
+                              const int32 WarningCost)
 {
 	CHECK_VALID(Arena)
 	TArray<ETileState> TileStateMap = RequestTileState(Arena);
@@ -76,58 +97,53 @@ TArray<FTile> URobotUtils::Dijkstra(const APopulatedArena* Arena, const FTile Fr
 	{
 		if (IsValid(Arena->Bombers[i])) TileStateMap[Arena->Bombers[i]->CurrentTile.Index()] = ETileState::Blocked;
 	}
-	TArray<FTile> Parent;
-	for (int32 i = 0; i < GTotal; ++i) Parent.Add(IndexTile(i));
 	TArray<int32> Cost;
 	Cost.Init(MAX_int32, GTotal);
-	std::priority_queue<std::pair<int32, FTile>, std::vector<std::pair<int32, FTile>>, std::greater<>> ToVisit;
-	ToVisit.emplace(0, From);
+	std::priority_queue<FPathFindStep> ToVisit;
+	for (FTile Origin : From.Neighbors())
+	{
+		if (TileStateMap[Origin.Index()] == ETileState::Normal)
+		{
+			Cost[Origin.Index()] = NormalCost;
+			ToVisit.emplace(NormalCost, Origin, Origin);
+		}
+		else if (TileStateMap[Origin.Index()] == ETileState::Warning)
+		{
+			Cost[Origin.Index()] = WarningCost;
+			ToVisit.emplace(WarningCost, Origin, Origin);
+		}
+	}
 	while (!ToVisit.empty())
 	{
-		const int32 CCost = ToVisit.top().first;
-		const FTile CTile = ToVisit.top().second;
+		const auto Current = ToVisit.top();
 		ToVisit.pop();
-		if (CCost > Cost[CTile.Index()]) continue;
-		Cost[CTile.Index()] = CCost;
-		if (CTile == To)
+		if (Current.Cost > Cost[Current.Target.Index()]) continue;
+		Cost[Current.Target.Index()] = Current.Cost;
+		if (Current.Target == To)
 		{
-			TArray<FTile> RevPath;
-			FTile Trace = To;
-			while (Trace != From)
-			{
-				RevPath.Add(Trace);
-				Trace = Parent[Trace.Index()];
-			}
-			TArray<FTile> Path;
-			for (int32 i = RevPath.Num() - 1; i >= 0; --i)
-			{
-				Path.Add(RevPath[i]);
-			}
-			return Path;
+			return FResult::Success(Current.Origin);
 		}
-		for (const FTile Neighbor : CTile.Neighbors())
+		for (const FTile Neighbor : Current.Target.Neighbors())
 		{
 			if (TileStateMap[Neighbor.Index()] == ETileState::Normal)
 			{
-				int32 NewCost = CCost + NormalCost;
+				int32 NewCost = Current.Cost + NormalCost;
 				if (NewCost < Cost[Neighbor.Index()])
 				{
-					Parent[Neighbor.Index()] = CTile;
-					ToVisit.emplace(NewCost, Neighbor);
+					ToVisit.emplace(NewCost, Neighbor, Current.Origin);
 				}
 			}
 			else if (TileStateMap[Neighbor.Index()] == ETileState::Warning)
 			{
-				int32 NewCost = CCost + WarningCost;
+				int32 NewCost = Current.Cost + WarningCost;
 				if (NewCost < Cost[Neighbor.Index()])
 				{
-					Parent[Neighbor.Index()] = CTile;
-					ToVisit.emplace(NewCost, Neighbor);
+					ToVisit.emplace(NewCost, Neighbor, Current.Origin);
 				}
 			}
 		}
 	}
-	return {};
+	return FResult::Fail();
 }
 
 bool URobotUtils::IsWarningAt(const AArena* Arena, const FTile Tile)
