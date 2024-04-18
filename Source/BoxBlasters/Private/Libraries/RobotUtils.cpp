@@ -2,6 +2,31 @@
 #include "Actors/PopulatedArena.h"
 
 #include <queue>
+#include <string>
+
+void LogTileState2(const TArray<ETileState>& TileStateMap)
+{
+	std::string LogResult;
+	for (int i = 0; i < GY; ++i)
+	{
+		for (int j = 0; j < GX; ++j)
+		{
+			switch (TileStateMap[FTile{j, i}.Index()]) {
+			case ETileState::Normal:
+				LogResult += ".";
+				break;
+			case ETileState::Warning:
+				LogResult += "_";
+				break;
+			case ETileState::Blocked:
+				LogResult += "#";
+				break;
+			}
+		}
+		LogResult += "\n";
+	}
+	UE_LOG(LogTemp, Log, TEXT("%hs"), LogResult.c_str());
+}
 
 TArray<ETileState> RequestTileState(const AArena* Arena)
 {
@@ -198,6 +223,7 @@ FMaybeTile URobotUtils::Dijkstra(const APopulatedArena* Arena, const FTile From,
 bool URobotUtils::IsWarningAt(const AArena* Arena, const FTile Tile)
 {
 	CHECK_VALID(Arena);
+	LogTileState2(RequestTileState(Arena));
 	return Arena->WarningMap[Tile.Index()];
 }
 

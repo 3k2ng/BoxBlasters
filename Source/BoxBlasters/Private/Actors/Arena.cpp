@@ -190,7 +190,11 @@ void AArena::UpdateWarning()
 			}
 		}
 	}
-	for (const FTile WarningTile : WarningTiles) InstancedWarning->AddInstance(FTransform{WarningTile.Location()});
+	for (const FTile WarningTile : WarningTiles)
+	{
+		InstancedWarning->AddInstance(FTransform{WarningTile.Location()});
+		WarningMap[WarningTile.Index()] = true;
+	}
 }
 
 void AArena::ExplodeAt(const FTile Tile)

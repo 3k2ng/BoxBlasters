@@ -183,6 +183,7 @@ TArray<FBombingPathFindStep> FBombingPathFindStep::GetNext(const FTile Target, c
 				{ ERobotTaskType::Move, BombTile },
 				{ ERobotTaskType::Bomb, {} },
 				{ ERobotTaskType::Move, BestEscape.JustTile },
+				{ ERobotTaskType::Wait, BombTile },
 			});
 			const FTile NewLocation = BestEscape.JustTile;
 			const FMapState DetonatedMapState = BombedMapState.DetonateBomb(BombTile);
@@ -194,6 +195,7 @@ TArray<FBombingPathFindStep> FBombingPathFindStep::GetNext(const FTile Target, c
 				if (BestScore > CurrentScore) BestScore = CurrentScore;
 			}
 			NewCost += 10000 * BestScore;
+			NewCost += 10000;
 			NextSteps.Add({
 				NewCost,
 				NewLocation,
@@ -202,7 +204,13 @@ TArray<FBombingPathFindStep> FBombingPathFindStep::GetNext(const FTile Target, c
 			});
 		}
 	}
-	return NextSteps;
+	NextSteps.Sort([](const FBombingPathFindStep& A, const FBombingPathFindStep& B){ return A.Cost > B.Cost; });
+	TArray<FBombingPathFindStep> ChosenSteps;
+	for (int i = 0; i < std::min(3, NextSteps.Num()); ++i)
+	{
+		ChosenSteps.Push(NextSteps[i]);
+	}
+	return ChosenSteps;
 }
 
 FMaybePlan UPlannerUtils::PlanToReach(const AArmedBomber* Bomber, const FTile Target)
