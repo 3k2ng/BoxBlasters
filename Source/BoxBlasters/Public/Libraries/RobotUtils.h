@@ -50,6 +50,7 @@ enum class ETileState : uint8
 
 TArray<ETileState> RequestTileState(const AArena* Arena);
 TArray<FTile> RequestReachableTiles(const TArray<ETileState>& TileStateMap, const FTile From, const bool Safe);
+TArray<FTile> RequestBombEscapes(const TArray<ETileState>& TileStateMap, const FTile From);
 int32 RequestTileCost(const TArray<ETileState>& TileStateMap, const FTile From, const FTile To,
 					  const int32 NormalCost, const int32 WarningCost);
 FMaybeTile RequestLeastCostTile(const TArray<ETileState>& TileStateMap, const FTile From, const TArray<FTile>& To,

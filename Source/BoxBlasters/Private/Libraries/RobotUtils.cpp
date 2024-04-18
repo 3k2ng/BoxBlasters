@@ -42,6 +42,16 @@ TArray<FTile> RequestReachableTiles(const TArray<ETileState>& TileStateMap, cons
 	return ReachableTiles;
 }
 
+TArray<FTile> RequestBombEscapes(const TArray<ETileState>& TileStateMap, const FTile From)
+{
+	TArray<FTile> BombEscapes;
+	for (const FTile BombEscape : RequestReachableTiles(TileStateMap, From, false))
+	{
+		if (TileStateMap[BombEscape.Index()] == ETileState::Normal) BombEscapes.Add(BombEscape);
+	}
+	return BombEscapes;
+}
+
 int32 RequestTileCost(const TArray<ETileState>& TileStateMap, const FTile From, const FTile To,
                       const int32 NormalCost, const int32 WarningCost)
 {

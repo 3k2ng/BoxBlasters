@@ -37,6 +37,9 @@ struct FMapState
 	TArray<EBombType> BombTypeMap;
 	UPROPERTY()
 	TArray<int32> BombPowerMap;
+	UPROPERTY()
+	FTile BomberTile[4];
+	bool BomberAlive[4];
 	FMapState() {};
 	explicit FMapState(const AArmedBomber* Bomber);
 	TArray<ETileState> TileState() const;
@@ -52,12 +55,18 @@ struct FBombingPathFindStep
 	FTile Location;
 	FMapState MapState;
 	TArray<FRobotTask> TaskList;
+	TArray<FBombingPathFindStep> GetNext(const FTile Target, const int32 BombPower) const;
 };
+
+inline bool operator<(const FBombingPathFindStep& A, const FBombingPathFindStep& B)
+{
+	return A.Cost > B.Cost;
+}
 
 UCLASS()
 class BOXBLASTERS_API UPlannerUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 	UFUNCTION(BlueprintPure)
-	static FRobotPlan PlanToReach(const AArmedBomber* Bomber, const FTile Target);
+	static FMaybePlan PlanToReach(const AArmedBomber* Bomber, const FTile Target);
 };
