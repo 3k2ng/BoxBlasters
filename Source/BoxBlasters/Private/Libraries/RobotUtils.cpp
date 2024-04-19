@@ -140,7 +140,7 @@ struct FAStarNode
 
 inline bool operator<(const FAStarNode& A, const FAStarNode& B) { return A.Cost > B.Cost; }
 
-TArray<FTile> FStatusMap::AStar(const FTile A, const FTile B, const int32 SafeCost, const int32 DangerCost) const
+TArray<FTile> FStatusMap::AStar(const FTile A, const FTile B, const int32 SafeCost, const int32 DangerCost, const int32 Weight) const
 {
 	TArray<FTile> Parent;
 	Parent.Init({}, GTotal);
@@ -151,7 +151,7 @@ TArray<FTile> FStatusMap::AStar(const FTile A, const FTile B, const int32 SafeCo
 	TArray<int32> Cost;
 	Cost.Init(MAX_int32, GTotal);
 	std::priority_queue<FAStarNode> ToVisit;
-	ToVisit.emplace(A, TileDistance(A, B));
+	ToVisit.emplace(A, TileDistance(A, B) * Weight);
 	while (!ToVisit.empty())
 	{
 		FAStarNode C = ToVisit.top();
@@ -178,7 +178,7 @@ TArray<FTile> FStatusMap::AStar(const FTile A, const FTile B, const int32 SafeCo
 		{
 			if (!IsBlocked(N))
 			{
-				int32 NewCost = C.Cost + (IsSafe(N) ? SafeCost : DangerCost) + TileDistance(C.Tile, B);
+				int32 NewCost = C.Cost + (IsSafe(N) ? SafeCost : DangerCost) + TileDistance(C.Tile, B) * Weight;
 				if (NewCost < Cost[N.Index()])
 				{
 					Parent[N.Index()] = C.Tile;
@@ -232,7 +232,7 @@ struct FBombAStarNode
 
 inline bool operator<(const FBombAStarNode& A, const FBombAStarNode& B) { return A.Cost > B.Cost; }
 
-TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 BombPower) const
+TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 BombPower, const int32 BombCost, const int32 Weight) const
 {
 	TArray<std::pair<FTile, int32>> Parent[2];
 	Parent[0].Init({}, GTotal);
@@ -284,7 +284,7 @@ TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 Bo
 				if (BestScore > CurrentScore) BestScore = CurrentScore;
 			}
 			bool IsSecond = C.Bombed[BombTile.Index()];
-			int32 NewCost = C.Cost + 10 + BestScore;
+			int32 NewCost = C.Cost + BombCost + BestScore * Weight;
 			if ((!IsSecond && NewCost < Cost[0][BombTile.Index()]) || (IsSecond && NewCost < Cost[1][BombTile.Index()]))
 			{
 				TArray<bool> Bombed = C.Bombed;
@@ -407,16 +407,16 @@ TArray<FTile> FStatusMap::ViableBombSpots(const FTile A, const int32 BombPower) 
 }
 
 FMaybeTile URobotUtils::FindPathTo(const ABomber* Bomber, const FTile Goal, const int32 SafeCost,
-                                   const int32 DangerCost)
+                                   const int32 DangerCost, const int32 Weight)
 {
-	TArray<FTile> Path = FStatusMap(Bomber).AStar(Bomber->CurrentTile, Goal, SafeCost, DangerCost);
+	TArray<FTile> Path = FStatusMap(Bomber).AStar(Bomber->CurrentTile, Goal, SafeCost, DangerCost, Weight);
 	if (Path.Num() > 0) return FMaybeTile::Just(Path[0]);
 	return FMaybeTile::None();
 }
 
-FMaybeTile URobotUtils::BombToReach(const ABomber* Bomber, const FTile Goal, const int32 BombPower)
+FMaybeTile URobotUtils::BombToReach(const ABomber* Bomber, const FTile Goal, const int32 BombPower, const int32 BombCost, const int32 Weight)
 {
-	TArray<FTile> Path = FStatusMap(Bomber).BombAStar(Bomber->CurrentTile, Goal, BombPower);
+	TArray<FTile> Path = FStatusMap(Bomber).BombAStar(Bomber->CurrentTile, Goal, BombPower, BombCost, Weight);
 	if (Path.Num() > 0) return FMaybeTile::Just(Path[0]);
 	return FMaybeTile::None();
 }
