@@ -46,7 +46,7 @@ enum class ETileStatus : uint8
 	Safe UMETA(DisplayName = "Safe"),
 	Danger UMETA(DisplayName = "Danger"),
 	Bomb UMETA(DisplayName = "Bomb"),
-	Wall UMETA(DisplayName = "Wall"),
+	Blocked UMETA(DisplayName = "Wall"),
 	Breakable UMETA(DisplayName = "Breakable"),
 	Reinforced UMETA(DisplayName = "Reinforced"),
 };
@@ -97,5 +97,5 @@ public:
 	UFUNCTION(BlueprintPure)
 	static TArray<FTile> GetPotentialBombEscapes(const ABomber* Bomber, const FTile BombTile);
 	UFUNCTION(BlueprintPure)
-	static FMaybeTile GetNearestTile(const ABomber* Bomber, const FTile A, const TArray<FTile>& Bs, const int32 SafeCost, const int32 DangerCost);
+	static FMaybeTile GetNearestTile(const ABomber* Bomber, const FTile A, const TArray<FTile>& Bs);
 };

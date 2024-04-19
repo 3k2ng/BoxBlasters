@@ -14,7 +14,9 @@ FStatusMap::FStatusMap(const ABomber* Bomber)
 	BombPowerMap = Arena->BombPowerMap;
 	for (int i = 0; i < GTotal; ++i)
 	{
-		if (Arena->TileMap[i] == ETileType::Wall) TileStatusMap[i] = ETileStatus::Wall;
+		if (Arena->TileMap[i] == ETileType::Wall ||
+			Arena->ExplosionTimerMap[i] > 0.F)
+			TileStatusMap[i] = ETileStatus::Blocked;
 		else if (Arena->TileMap[i] == ETileType::Reinforced) TileStatusMap[i] = ETileStatus::Reinforced;
 		else if (Arena->TileMap[i] != ETileType::Empty) TileStatusMap[i] = ETileStatus::Breakable;
 		else
@@ -42,7 +44,8 @@ void LogStatusMap(const FStatusMap& StatusMap)
 	{
 		for (int j = 0; j < GX; ++j)
 		{
-			switch (StatusMap.TileStatusMap[i * GX + j]) {
+			switch (StatusMap.TileStatusMap[i * GX + j])
+			{
 			case ETileStatus::Safe:
 				LogOutput += ".";
 				break;
@@ -52,7 +55,7 @@ void LogStatusMap(const FStatusMap& StatusMap)
 			case ETileStatus::Bomb:
 				LogOutput += "6";
 				break;
-			case ETileStatus::Wall:
+			case ETileStatus::Blocked:
 				LogOutput += "X";
 				break;
 			case ETileStatus::Breakable:
@@ -140,7 +143,8 @@ struct FAStarNode
 
 inline bool operator<(const FAStarNode& A, const FAStarNode& B) { return A.Cost > B.Cost; }
 
-TArray<FTile> FStatusMap::AStar(const FTile A, const FTile B, const int32 SafeCost, const int32 DangerCost, const int32 Weight) const
+TArray<FTile> FStatusMap::AStar(const FTile A, const FTile B, const int32 SafeCost, const int32 DangerCost,
+                                const int32 Weight) const
 {
 	TArray<FTile> Parent;
 	Parent.Init({}, GTotal);
@@ -178,7 +182,8 @@ TArray<FTile> FStatusMap::AStar(const FTile A, const FTile B, const int32 SafeCo
 		{
 			if (!IsBlocked(Neighbor))
 			{
-				int32 NewCost = Current.Cost + (IsSafe(Neighbor) ? SafeCost : DangerCost) + TileDistance(Current.Tile, B) * Weight;
+				int32 NewCost = Current.Cost + (IsSafe(Neighbor) ? SafeCost : DangerCost) + TileDistance(
+					Current.Tile, B) * Weight;
 				if (NewCost < Cost[Neighbor.Index()])
 				{
 					Parent[Neighbor.Index()] = Current.Tile;
@@ -197,7 +202,8 @@ struct FBombAStarNode
 	TArray<FTile> Bombs;
 	int32 Cost;
 
-	FBombAStarNode(const FStatusMap& InSM, const TArray<bool>& InBombed, const TArray<FTile>& InBombs, const int32 InCost) :
+	FBombAStarNode(const FStatusMap& InSM, const TArray<bool>& InBombed, const TArray<FTile>& InBombs,
+	               const int32 InCost) :
 		StatusMap(InSM),
 		Bombed(InBombed),
 		Bombs(InBombs),
@@ -205,7 +211,8 @@ struct FBombAStarNode
 	{
 	}
 
-	static TArray<FBombAStarNode> Init(const FStatusMap& StatusMap, const FTile A, const FTile B, const int32 BombPower, const int32 BombCost, const int32 Weight)
+	static TArray<FBombAStarNode> Init(const FStatusMap& StatusMap, const FTile A, const FTile B, const int32 BombPower,
+	                                   const int32 BombCost, const int32 Weight)
 	{
 		TArray<FBombAStarNode> InitStates;
 		for (const FTile BombTile : StatusMap.ViableBombSpots(A, BombPower))
@@ -221,7 +228,7 @@ struct FBombAStarNode
 			InitStates.Emplace(
 				StatusMap.PlaceBomb(BombTile, BombPower).DetonateBomb(BombTile),
 				Bombed,
-				TArray<FTile>{ BombTile },
+				TArray<FTile>{BombTile},
 				BombCost + BestScore * Weight
 			);
 		}
@@ -231,7 +238,8 @@ struct FBombAStarNode
 
 inline bool operator<(const FBombAStarNode& A, const FBombAStarNode& B) { return A.Cost > B.Cost; }
 
-TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 BombPower, const int32 BombCost, const int32 Weight) const
+TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 BombPower, const int32 BombCost,
+                                    const int32 Weight) const
 {
 	TArray<int32> Cost[2];
 	Cost[0].Init(MAX_int32, GTotal);
@@ -284,7 +292,7 @@ TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 Bo
 TArray<FTile> FStatusMap::BombImpact(const FTile BombTile, const int32 BombPower) const
 {
 	TArray<FTile> BombedTiles;
-	if (TileStatusMap[BombTile.Index()] == ETileStatus::Wall) return BombedTiles;
+	if (TileStatusMap[BombTile.Index()] == ETileStatus::Blocked) return BombedTiles;
 	bool Blocked[] = {false, false, false, false};
 	constexpr FTile ToAdd[] = {
 		{0, -1}, {0, 1}, {-1, 0}, {1, 0}
@@ -300,9 +308,9 @@ TArray<FTile> FStatusMap::BombImpact(const FTile BombTile, const int32 BombPower
 				FTile BombedTile = BombTile + i * ToAdd[j];
 				if (BombedTile.IsValid())
 				{
-					Blocked[j] |= TileStatusMap[BombedTile.Index()] == ETileStatus::Wall;
+					Blocked[j] |= TileStatusMap[BombedTile.Index()] == ETileStatus::Blocked;
 					Blocked[j] |= TileStatusMap[BombedTile.Index()] == ETileStatus::Reinforced;
-					if (TileStatusMap[BombedTile.Index()] != ETileStatus::Wall) BombedTiles.Add(BombedTile);
+					if (TileStatusMap[BombedTile.Index()] != ETileStatus::Blocked) BombedTiles.Add(BombedTile);
 				}
 			}
 		}
@@ -315,7 +323,8 @@ FStatusMap FStatusMap::BreakTiles(const TArray<FTile>& ToBreak) const
 	FStatusMap NewMap = *this;
 	for (const FTile Tile : ToBreak)
 	{
-		if (TileStatusMap[Tile.Index()] == ETileStatus::Breakable)
+		if (TileStatusMap[Tile.Index()] == ETileStatus::Danger ||
+			TileStatusMap[Tile.Index()] == ETileStatus::Breakable)
 			NewMap.TileStatusMap[Tile.Index()] = ETileStatus::Safe;
 		else if (TileStatusMap[Tile.Index()] == ETileStatus::Bomb)
 		{
@@ -324,6 +333,16 @@ FStatusMap FStatusMap::BreakTiles(const TArray<FTile>& ToBreak) const
 		}
 		else if (TileStatusMap[Tile.Index()] == ETileStatus::Reinforced)
 			NewMap.TileStatusMap[Tile.Index()] = ETileStatus::Breakable;
+	}
+	for (int i = 0; i < GTotal; ++i)
+	{
+		if (TileStatusMap[i] == ETileStatus::Bomb)
+		{
+			for (const FTile ImpactedTile : NewMap.BombImpact(IndexTile(i), BombPowerMap[i]))
+			{
+				if (!NewMap.IsBlocked(ImpactedTile)) NewMap.TileStatusMap[ImpactedTile.Index()] = ETileStatus::Danger;
+			}
+		}
 	}
 	return NewMap;
 }
@@ -336,11 +355,16 @@ FStatusMap FStatusMap::PlaceBomb(const FTile BombTile, const int32 BombPower) co
 		NewMap.TileStatusMap[BombTile.Index()] = ETileStatus::Bomb;
 		NewMap.BombPowerMap[BombTile.Index()] = BombPower;
 	}
+	for (const FTile ImpactedTile : NewMap.BombImpact(BombTile, BombPower))
+	{
+		if (!NewMap.IsBlocked(ImpactedTile)) NewMap.TileStatusMap[ImpactedTile.Index()] = ETileStatus::Danger;
+	}
 	return NewMap;
 }
 
 FStatusMap FStatusMap::DetonateBomb(const FTile A) const
 {
+	FStatusMap NewMap = *this;
 	TArray<FTile> ImpactedTiles;
 	std::queue<FTile> BombTiles;
 	if (TileStatusMap[A.Index()] == ETileStatus::Bomb) BombTiles.push(A);
@@ -348,14 +372,14 @@ FStatusMap FStatusMap::DetonateBomb(const FTile A) const
 	{
 		FTile BombTile = BombTiles.front();
 		BombTiles.pop();
-		for (const FTile ImpactedTile : BombImpact(BombTile, BombPowerMap[BombTile.Index()]))
+		NewMap.TileStatusMap[BombTile.Index()] = ETileStatus::Breakable;
+		for (const FTile ImpactedTile : NewMap.BombImpact(BombTile, BombPowerMap[BombTile.Index()]))
 		{
 			ImpactedTiles.AddUnique(ImpactedTile);
-			if (ImpactedTile == BombTile) continue;
-			if (TileStatusMap[ImpactedTile.Index()] == ETileStatus::Bomb) BombTiles.push(ImpactedTile);
+			if (NewMap.TileStatusMap[ImpactedTile.Index()] == ETileStatus::Bomb) BombTiles.push(ImpactedTile);
 		}
 	}
-	return BreakTiles(ImpactedTiles);
+	return NewMap.BreakTiles(ImpactedTiles);
 }
 
 TArray<FTile> FStatusMap::ReachableSafe(const FTile A, const bool Safe) const
@@ -382,30 +406,34 @@ TArray<FTile> FStatusMap::ViableBombSpots(const FTile A, const int32 BombPower) 
 			}
 		}
 	}
-	return BombSpots;
+	return BombSpots.FilterByPredicate([&](const FTile BombTile)
+	{
+		return PlaceBomb(BombTile, BombPower).ReachableSafe(BombTile, false).Num() > 0;
+	});
 }
 
 TArray<FTile> URobotUtils::GetAStar(const ABomber* Bomber, const FTile Goal, const int32 SafeCost,
-	const int32 DangerCost, const int32 Weight)
+                                    const int32 DangerCost, const int32 Weight)
 {
 	return FStatusMap(Bomber).AStar(Bomber->CurrentTile, Goal, SafeCost, DangerCost, Weight);
 }
 
 TArray<FTile> URobotUtils::GetBombAStar(const ABomber* Bomber, const FTile Goal, const int32 BombPower,
-	const int32 BombCost, const int32 Weight)
+                                        const int32 BombCost, const int32 Weight)
 {
 	return FStatusMap(Bomber).BombAStar(Bomber->CurrentTile, Goal, BombPower, BombCost, Weight);
 }
 
 FMaybeTile URobotUtils::GetAStarTop(const ABomber* Bomber, const FTile Goal, const int32 SafeCost,
-                                   const int32 DangerCost, const int32 Weight)
+                                    const int32 DangerCost, const int32 Weight)
 {
 	TArray<FTile> AStarResult = GetAStar(Bomber, Goal, SafeCost, DangerCost, Weight);
 	if (AStarResult.Num() > 0) return FMaybeTile::Just(AStarResult[0]);
 	return FMaybeTile::None();
 }
 
-FMaybeTile URobotUtils::GetBombAStarTop(const ABomber* Bomber, const FTile Goal, const int32 BombPower, const int32 BombCost, const int32 Weight)
+FMaybeTile URobotUtils::GetBombAStarTop(const ABomber* Bomber, const FTile Goal, const int32 BombPower,
+                                        const int32 BombCost, const int32 Weight)
 {
 	TArray<FTile> BombAStarResult = GetBombAStar(Bomber, Goal, BombPower, BombCost, Weight);
 	if (BombAStarResult.Num() > 0) return FMaybeTile::Just(BombAStarResult[0]);
@@ -437,15 +465,13 @@ TArray<FTile> URobotUtils::GetPotentialBombEscapes(const ABomber* Bomber, const 
 	return FStatusMap(Bomber).PlaceBomb(BombTile, Bomber->Power).ReachableSafe(BombTile, false);
 }
 
-FMaybeTile URobotUtils::GetNearestTile(const ABomber* Bomber, const FTile A, const TArray<FTile>& Bs, const int32 SafeCost,
-	const int32 DangerCost)
+FMaybeTile URobotUtils::GetNearestTile(const ABomber* Bomber, const FTile A, const TArray<FTile>& Bs)
 {
 	FMaybeTile NearestTile = FMaybeTile::None();
 	int32 LeastCost = MAX_int32;
-	const FStatusMap StatusMap(Bomber);
 	for (const FTile B : Bs)
 	{
-		const int32 CurrentCost = StatusMap.WalkCost(A, B, SafeCost, DangerCost);
+		const int32 CurrentCost = TileDistance(A, B);
 		if (LeastCost > CurrentCost)
 		{
 			NearestTile = FMaybeTile::Just(B);
