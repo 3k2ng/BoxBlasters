@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "CommonUtils.h"
 #include "Actors/Bomber.h"
-#include "Actors/PopulatedArena.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "RobotUtils.generated.h"
 
@@ -98,4 +97,6 @@ public:
 	static TArray<FTile> GetPotentialBombEscapes(const ABomber* Bomber, const FTile BombTile);
 	UFUNCTION(BlueprintPure)
 	static FMaybeTile GetNearestTile(const ABomber* Bomber, const FTile A, const TArray<FTile>& Bs);
+	UFUNCTION(BlueprintPure)
+	static TArray<FTile> GetBoxes(const ABomber* Bomber, const bool FindWhite, const bool FindRed, const bool FindGreen, const bool FindBlue);
 };

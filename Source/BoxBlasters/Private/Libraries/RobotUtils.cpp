@@ -241,6 +241,7 @@ inline bool operator<(const FBombAStarNode& A, const FBombAStarNode& B) { return
 TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 BombPower, const int32 BombCost,
                                     const int32 Weight) const
 {
+	if (ReachableTiles(A, false).Contains(B)) return {};
 	TArray<int32> Cost[2];
 	Cost[0].Init(MAX_int32, GTotal);
 	Cost[1].Init(MAX_int32, GTotal);
@@ -479,4 +480,27 @@ FMaybeTile URobotUtils::GetNearestTile(const ABomber* Bomber, const FTile A, con
 		}
 	}
 	return NearestTile;
+}
+
+TArray<FTile> URobotUtils::GetBoxes(
+	const ABomber* Bomber,
+	const bool FindWhite,
+	const bool FindRed,
+	const bool FindGreen,
+	const bool FindBlue)
+{
+	CHECK_VALID(Bomber);
+	const APopulatedArena* Arena = Cast<APopulatedArena>(Bomber->Arena);
+	CHECK_VALID(Arena);
+	TArray<FTile> BoxTiles;
+	for (int i = 0; i < GTotal; ++i)
+	{
+		if ((FindWhite && Arena->TileMap[i] == ETileType::White) ||
+			(FindRed && Arena->TileMap[i] == ETileType::Red) ||
+			(FindGreen && Arena->TileMap[i] == ETileType::Green) ||
+			(FindBlue && Arena->TileMap[i] == ETileType::Blue)
+		)
+			BoxTiles.Add(IndexTile(i));
+	}
+	return BoxTiles;
 }
