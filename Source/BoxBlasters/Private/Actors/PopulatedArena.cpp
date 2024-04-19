@@ -15,6 +15,11 @@ void APopulatedArena::Tick(const float DeltaTime)
 	}
 }
 
+AArmedBomber* APopulatedArena::GetBomber(const int32 Index) const
+{
+	return Bombers[Index];
+}
+
 void APopulatedArena::BeginPlay()
 {
 	Super::BeginPlay();
