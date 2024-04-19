@@ -79,9 +79,13 @@ class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 
 public:
 	UFUNCTION(BlueprintPure)
-	static FMaybeTile FindPathTo(const ABomber* Bomber, const FTile Goal, const int32 SafeCost, const int32 DangerCost, const int32 Weight);
+	static TArray<FTile> GetAStar(const ABomber* Bomber, const FTile Goal, const int32 SafeCost, const int32 DangerCost, const int32 Weight);
 	UFUNCTION(BlueprintPure)
-	static FMaybeTile BombToReach(const ABomber* Bomber, const FTile Goal, const int32 BombPower, const int32 BombCost, const int32 Weight);
+	static TArray<FTile> GetBombAStar(const ABomber* Bomber, const FTile Goal, const int32 BombPower, const int32 BombCost, const int32 Weight);
+	UFUNCTION(BlueprintPure)
+	static FMaybeTile GetAStarTop(const ABomber* Bomber, const FTile Goal, const int32 SafeCost, const int32 DangerCost, const int32 Weight);
+	UFUNCTION(BlueprintPure)
+	static FMaybeTile GetBombAStarTop(const ABomber* Bomber, const FTile Goal, const int32 BombPower, const int32 BombCost, const int32 Weight);
 	UFUNCTION(BlueprintPure)
 	static bool IsTileSafe(const ABomber* Bomber, const FTile A);
 	UFUNCTION(BlueprintPure)

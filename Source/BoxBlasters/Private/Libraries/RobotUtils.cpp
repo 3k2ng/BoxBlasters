@@ -205,7 +205,7 @@ struct FBombAStarNode
 	{
 	}
 
-	static TArray<FBombAStarNode> Init(const FStatusMap& StatusMap, const FTile A, const FTile B, const int32 BombPower)
+	static TArray<FBombAStarNode> Init(const FStatusMap& StatusMap, const FTile A, const FTile B, const int32 BombPower, const int32 BombCost, const int32 Weight)
 	{
 		TArray<FBombAStarNode> InitStates;
 		for (const FTile BombTile : StatusMap.ViableBombSpots(A, BombPower))
@@ -223,7 +223,7 @@ struct FBombAStarNode
 				StatusMap.PlaceBomb(BombTile, BombPower).DetonateBomb(BombTile),
 				Bombed,
 				std::pair<FTile, int32>{ BombTile, 0 },
-				BestScore
+				BombCost + BestScore * Weight
 			);
 		}
 		return InitStates;
@@ -248,7 +248,7 @@ TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 Bo
 	Cost[0].Init(MAX_int32, GTotal);
 	Cost[1].Init(MAX_int32, GTotal);
 	std::priority_queue<FBombAStarNode> ToVisit;
-	for (const FBombAStarNode InitState : FBombAStarNode::Init(*this, A, B, BombPower))
+	for (const FBombAStarNode InitState : FBombAStarNode::Init(*this, A, B, BombPower, BombCost, Weight))
 	{
 		ToVisit.push(InitState);
 	}
@@ -406,18 +406,30 @@ TArray<FTile> FStatusMap::ViableBombSpots(const FTile A, const int32 BombPower) 
 	return BombSpots;
 }
 
-FMaybeTile URobotUtils::FindPathTo(const ABomber* Bomber, const FTile Goal, const int32 SafeCost,
+TArray<FTile> URobotUtils::GetAStar(const ABomber* Bomber, const FTile Goal, const int32 SafeCost,
+	const int32 DangerCost, const int32 Weight)
+{
+	return FStatusMap(Bomber).AStar(Bomber->CurrentTile, Goal, SafeCost, DangerCost, Weight);
+}
+
+TArray<FTile> URobotUtils::GetBombAStar(const ABomber* Bomber, const FTile Goal, const int32 BombPower,
+	const int32 BombCost, const int32 Weight)
+{
+	return FStatusMap(Bomber).BombAStar(Bomber->CurrentTile, Goal, BombPower, BombCost, Weight);
+}
+
+FMaybeTile URobotUtils::GetAStarTop(const ABomber* Bomber, const FTile Goal, const int32 SafeCost,
                                    const int32 DangerCost, const int32 Weight)
 {
-	TArray<FTile> Path = FStatusMap(Bomber).AStar(Bomber->CurrentTile, Goal, SafeCost, DangerCost, Weight);
-	if (Path.Num() > 0) return FMaybeTile::Just(Path[0]);
+	TArray<FTile> AStarResult = GetAStar(Bomber, Goal, SafeCost, DangerCost, Weight);
+	if (AStarResult.Num() > 0) return FMaybeTile::Just(AStarResult[0]);
 	return FMaybeTile::None();
 }
 
-FMaybeTile URobotUtils::BombToReach(const ABomber* Bomber, const FTile Goal, const int32 BombPower, const int32 BombCost, const int32 Weight)
+FMaybeTile URobotUtils::GetBombAStarTop(const ABomber* Bomber, const FTile Goal, const int32 BombPower, const int32 BombCost, const int32 Weight)
 {
-	TArray<FTile> Path = FStatusMap(Bomber).BombAStar(Bomber->CurrentTile, Goal, BombPower, BombCost, Weight);
-	if (Path.Num() > 0) return FMaybeTile::Just(Path[0]);
+	TArray<FTile> BombAStarResult = GetBombAStar(Bomber, Goal, BombPower, BombCost, Weight);
+	if (BombAStarResult.Num() > 0) return FMaybeTile::Just(BombAStarResult[0]);
 	return FMaybeTile::None();
 }
 
