@@ -15,6 +15,8 @@ public:
 	TSubclassOf<ABomber> BomberClass[4];
 	UPROPERTY(VisibleAnywhere)
 	AArmedBomber* Bombers[4];
+	UFUNCTION(BlueprintPure)
+	AArmedBomber* GetBomber(int32 Index) const;
 protected:
 	virtual void BeginPlay() override;
 };
