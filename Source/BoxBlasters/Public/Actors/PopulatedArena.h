@@ -17,6 +17,10 @@ public:
 	AArmedBomber* Bombers[4];
 	UFUNCTION(BlueprintPure)
 	AArmedBomber* GetBomber(int32 Index) const;
+	UFUNCTION(BlueprintPure)
+	int32 GetBomberCount() const;
+	UFUNCTION(BlueprintPure)
+	int32 GetRemainingBomber() const;
 protected:
 	virtual void BeginPlay() override;
 };

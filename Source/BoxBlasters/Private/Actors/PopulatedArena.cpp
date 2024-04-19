@@ -20,6 +20,28 @@ AArmedBomber* APopulatedArena::GetBomber(const int32 Index) const
 	return Bombers[Index];
 }
 
+int32 APopulatedArena::GetBomberCount() const
+{
+	int32 Count = 0;
+	for (int i = 0; i < 4; ++i)
+	{
+		if (IsValid(Bombers[i])) ++Count;
+	}
+	return Count;
+}
+
+int32 APopulatedArena::GetRemainingBomber() const
+{
+	if (GetBomberCount() > 0)
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			if (IsValid(Bombers[i])) return i;
+		}
+	}
+	return -1;
+}
+
 void APopulatedArena::BeginPlay()
 {
 	Super::BeginPlay();
