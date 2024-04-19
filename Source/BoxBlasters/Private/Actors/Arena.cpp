@@ -123,22 +123,22 @@ void AArena::AddBox(const FTile Tile, const ETileType BoxType)
 		case ETileType::Wall:
 			return;
 		case ETileType::Basic:
-			BoxColor = {0.5F, 0.4F, 0.3F};
+			BoxColor = {0.5F, 0.3F, 0.2F};
 			break;
 		case ETileType::Reinforced:
-			BoxColor = {0.2F, 0.2F, 0.3F};
+			BoxColor = {0.1F, 0.1F, 0.2F};
 			break;
 		case ETileType::White:
-			BoxColor = {0.9F, 0.9F, 0.9F};
+			BoxColor = {1.0F, 1.0F, 1.0F};
 			break;
 		case ETileType::Red:
-			BoxColor = {0.9F, 0.1F, 0.1F};
+			BoxColor = {0.9F, 0.1F, 0.2F};
 			break;
 		case ETileType::Green:
-			BoxColor = {0.1F, 0.9F, 0.1F};
+			BoxColor = {0.1F, 0.8F, 0.2F};
 			break;
 		case ETileType::Blue:
-			BoxColor = {0.1F, 0.1F, 0.9F};
+			BoxColor = {0.1F, 0.3F, 0.8F};
 			break;
 		default: ;
 		}
