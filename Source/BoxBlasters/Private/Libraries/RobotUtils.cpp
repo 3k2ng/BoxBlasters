@@ -14,9 +14,8 @@ FStatusMap::FStatusMap(const ABomber* Bomber)
 	BombPowerMap = Arena->BombPowerMap;
 	for (int i = 0; i < GTotal; ++i)
 	{
-		if (Arena->TileMap[i] == ETileType::Wall ||
-			Arena->ExplosionTimerMap[i] > 0.F)
-			TileStatusMap[i] = ETileStatus::Blocked;
+		if (Arena->TileMap[i] == ETileType::Wall) TileStatusMap[i] = ETileStatus::Wall;
+		else if (Arena->ExplosionTimerMap[i] > 0.F) TileStatusMap[i] = ETileStatus::Explosion;
 		else if (Arena->TileMap[i] == ETileType::Reinforced) TileStatusMap[i] = ETileStatus::Reinforced;
 		else if (Arena->TileMap[i] != ETileType::Empty) TileStatusMap[i] = ETileStatus::Breakable;
 		else
@@ -55,14 +54,17 @@ void LogStatusMap(const FStatusMap& StatusMap)
 			case ETileStatus::Bomb:
 				LogOutput += "6";
 				break;
-			case ETileStatus::Blocked:
+			case ETileStatus::Wall:
 				LogOutput += "X";
 				break;
 			case ETileStatus::Breakable:
-				LogOutput += "*";
+				LogOutput += "0";
 				break;
 			case ETileStatus::Reinforced:
 				LogOutput += "#";
+				break;
+			case ETileStatus::Explosion:
+				LogOutput += "*";
 				break;
 			}
 		}
@@ -293,7 +295,7 @@ TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 Bo
 TArray<FTile> FStatusMap::BombImpact(const FTile BombTile, const int32 BombPower) const
 {
 	TArray<FTile> BombedTiles;
-	if (TileStatusMap[BombTile.Index()] == ETileStatus::Blocked) return BombedTiles;
+	if (TileStatusMap[BombTile.Index()] == ETileStatus::Wall) return BombedTiles;
 	bool Blocked[] = {false, false, false, false};
 	constexpr FTile ToAdd[] = {
 		{0, -1}, {0, 1}, {-1, 0}, {1, 0}
@@ -309,9 +311,9 @@ TArray<FTile> FStatusMap::BombImpact(const FTile BombTile, const int32 BombPower
 				FTile BombedTile = BombTile + i * ToAdd[j];
 				if (BombedTile.IsValid())
 				{
-					Blocked[j] |= TileStatusMap[BombedTile.Index()] == ETileStatus::Blocked;
+					Blocked[j] |= TileStatusMap[BombedTile.Index()] == ETileStatus::Wall;
 					Blocked[j] |= TileStatusMap[BombedTile.Index()] == ETileStatus::Reinforced;
-					if (TileStatusMap[BombedTile.Index()] != ETileStatus::Blocked) BombedTiles.Add(BombedTile);
+					if (TileStatusMap[BombedTile.Index()] != ETileStatus::Wall) BombedTiles.Add(BombedTile);
 				}
 			}
 		}
@@ -456,9 +458,9 @@ bool URobotUtils::IsTileReachable(const ABomber* Bomber, const FTile A, const bo
 	return FStatusMap(Bomber).ReachableTiles(Bomber->CurrentTile, Safe).Contains(A);
 }
 
-TArray<FTile> URobotUtils::GetBombEscapes(const ABomber* Bomber, const FTile BombTile)
+TArray<FTile> URobotUtils::GetBombEscapes(const ABomber* Bomber)
 {
-	return FStatusMap(Bomber).ReachableSafe(BombTile, false);
+	return FStatusMap(Bomber).ReachableSafe(Bomber->CurrentTile, false);
 }
 
 TArray<FTile> URobotUtils::GetPotentialBombEscapes(const ABomber* Bomber, const FTile BombTile)
@@ -482,25 +484,20 @@ FMaybeTile URobotUtils::GetNearestTile(const ABomber* Bomber, const FTile A, con
 	return NearestTile;
 }
 
-TArray<FTile> URobotUtils::GetBoxes(
-	const ABomber* Bomber,
-	const bool FindWhite,
-	const bool FindRed,
-	const bool FindGreen,
-	const bool FindBlue)
+TArray<FTile> URobotUtils::GetBombSpotToHit(const ABomber* Bomber, const FTile A)
 {
-	CHECK_VALID(Bomber);
-	const APopulatedArena* Arena = Cast<APopulatedArena>(Bomber->Arena);
-	CHECK_VALID(Arena);
-	TArray<FTile> BoxTiles;
-	for (int i = 0; i < GTotal; ++i)
+	const FStatusMap StatusMap(Bomber);
+	return StatusMap.BombImpact(A, Bomber->Power).FilterByPredicate([&](const FTile BombTile)
 	{
-		if ((FindWhite && Arena->TileMap[i] == ETileType::White) ||
-			(FindRed && Arena->TileMap[i] == ETileType::Red) ||
-			(FindGreen && Arena->TileMap[i] == ETileType::Green) ||
-			(FindBlue && Arena->TileMap[i] == ETileType::Blue)
-		)
-			BoxTiles.Add(IndexTile(i));
-	}
-	return BoxTiles;
+		return StatusMap.IsSafe(BombTile);
+	});
+}
+
+TArray<FTile> URobotUtils::FilterReachable(const ABomber* Bomber, const TArray<FTile>& As, const bool Safe)
+{
+	const FStatusMap StatusMap(Bomber);
+	return As.FilterByPredicate([&](const FTile A)
+	{
+		return StatusMap.ReachableTiles(Bomber->CurrentTile, Safe).Contains(A);
+	});
 }
