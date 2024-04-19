@@ -218,7 +218,6 @@ struct FBombAStarNode
 			}
 			TArray<bool> Bombed;
 			Bombed.Init(false, GTotal);
-			Bombed[BombTile.Index()] = true;
 			InitStates.Emplace(
 				StatusMap.PlaceBomb(BombTile, BombPower).DetonateBomb(BombTile),
 				Bombed,
@@ -254,6 +253,8 @@ TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 Bo
 		{
 			return Current.Bombs;
 		}
+		TArray<bool> NextBombed = Current.Bombed;
+		NextBombed[CurrentTile.Index()] = true;
 		for (const FTile BombTile : Current.StatusMap.ViableBombSpots(A, BombPower))
 		{
 			int32 BestScore = MAX_int32;
@@ -266,10 +267,8 @@ TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 Bo
 			int32 NextCost = Current.Cost + BombCost + BestScore * Weight;
 			TArray<FTile> NextBombs = Current.Bombs;
 			NextBombs.Emplace(BombTile);
-			if ((!NextIsSecond && NextCost < Cost[0][BombTile.Index()]) || (NextIsSecond && NextCost < Cost[1][BombTile.Index()]))
+			if (NextCost < Cost[NextIsSecond ? 1 : 0][BombTile.Index()])
 			{
-				TArray<bool> NextBombed = Current.Bombed;
-				NextBombed[BombTile.Index()] = true;
 				ToVisit.emplace(
 					Current.StatusMap.PlaceBomb(BombTile, BombPower).DetonateBomb(BombTile),
 					NextBombed,
@@ -426,4 +425,32 @@ bool URobotUtils::IsTileBlocked(const ABomber* Bomber, const FTile A)
 bool URobotUtils::IsTileReachable(const ABomber* Bomber, const FTile A, const bool Safe)
 {
 	return FStatusMap(Bomber).ReachableTiles(Bomber->CurrentTile, Safe).Contains(A);
+}
+
+TArray<FTile> URobotUtils::GetBombEscapes(const ABomber* Bomber, const FTile BombTile)
+{
+	return FStatusMap(Bomber).ReachableSafe(BombTile, false);
+}
+
+TArray<FTile> URobotUtils::GetPotentialBombEscapes(const ABomber* Bomber, const FTile BombTile)
+{
+	return FStatusMap(Bomber).PlaceBomb(BombTile, Bomber->Power).ReachableSafe(BombTile, false);
+}
+
+FMaybeTile URobotUtils::GetNearestTile(const ABomber* Bomber, const FTile A, const TArray<FTile>& Bs, const int32 SafeCost,
+	const int32 DangerCost)
+{
+	FMaybeTile NearestTile = FMaybeTile::None();
+	int32 LeastCost = MAX_int32;
+	const FStatusMap StatusMap(Bomber);
+	for (const FTile B : Bs)
+	{
+		const int32 CurrentCost = StatusMap.WalkCost(A, B, SafeCost, DangerCost);
+		if (LeastCost > CurrentCost)
+		{
+			NearestTile = FMaybeTile::Just(B);
+			LeastCost = CurrentCost;
+		}
+	}
+	return NearestTile;
 }

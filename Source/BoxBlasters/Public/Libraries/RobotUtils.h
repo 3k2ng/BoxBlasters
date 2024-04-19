@@ -92,4 +92,10 @@ public:
 	static bool IsTileBlocked(const ABomber* Bomber, const FTile A);
 	UFUNCTION(BlueprintPure)
 	static bool IsTileReachable(const ABomber* Bomber, const FTile A, const bool Safe);
+	UFUNCTION(BlueprintPure)
+	static TArray<FTile> GetBombEscapes(const ABomber* Bomber, const FTile BombTile);
+	UFUNCTION(BlueprintPure)
+	static TArray<FTile> GetPotentialBombEscapes(const ABomber* Bomber, const FTile BombTile);
+	UFUNCTION(BlueprintPure)
+	static FMaybeTile GetNearestTile(const ABomber* Bomber, const FTile A, const TArray<FTile>& Bs, const int32 SafeCost, const int32 DangerCost);
 };
