@@ -41,64 +41,51 @@ struct FRobotTask
 };
 
 UENUM(BlueprintType)
-enum class ETileState : uint8
+enum class ETileStatus : uint8
 {
-	Normal UMETA(DisplayName = "Normal"),
-	Warning UMETA(DisplayName = "Warning"),
-	Blocked UMETA(DisplayName = "Blocked"),
+	Safe UMETA(DisplayName = "Safe"),
+	Danger UMETA(DisplayName = "Danger"),
+	Bomb UMETA(DisplayName = "Bomb"),
+	Wall UMETA(DisplayName = "Wall"),
+	Breakable UMETA(DisplayName = "Breakable"),
+	Reinforced UMETA(DisplayName = "Reinforced"),
 };
 
-TArray<ETileState> RequestTileState(const AArena* Arena);
-TArray<FTile> RequestReachableTiles(const TArray<ETileState>& TileStateMap, const FTile From, const bool Safe);
-TArray<FTile> RequestBombEscapes(const TArray<ETileState>& TileStateMap, const FTile From);
-int32 RequestTileCost(const TArray<ETileState>& TileStateMap, const FTile From, const FTile To,
-					  const int32 NormalCost, const int32 WarningCost);
-FMaybeTile RequestLeastCostTile(const TArray<ETileState>& TileStateMap, const FTile From, const TArray<FTile>& To,
-							 const int32 NormalCost, const int32 WarningCost);
-
-struct FPathFindStep
+struct FStatusMap
 {
-	int32 Cost;
-	FTile Target;
-	FTile Origin;
-
-	FPathFindStep(const int32 InCost,
-				  const FTile InTarget,
-				  const FTile InOrigin) : Cost(InCost), Target(InTarget), Origin(InOrigin) {}
+	TArray<ETileStatus> TileStatusMap;
+	TArray<int32> BombPowerMap;
+	FMaybeTile BomberTile[4];
+	explicit FStatusMap(const ABomber* Bomber);
+	FStatusMap() { for (int i = 0; i < 4; ++i) BomberTile[i] = FMaybeTile::None(); }
+	bool IsSafe(const FTile A) const;
+	bool IsBlocked(const FTile A) const;
+	TArray<FTile> ReachableTiles(const FTile A, const bool Safe) const;
+	int32 WalkCost(const FTile A, const FTile B, const int32 SafeCost, const int32 DangerCost) const;
+	TArray<FTile> BombImpact(const FTile BombTile, const int32 BombPower) const;
+	FStatusMap BreakTiles(const TArray<FTile>& ToBreak) const;
+	FStatusMap PlaceBomb(const FTile BombTile, const int32 BombPower) const;
+	FStatusMap DetonateBomb(const FTile A) const;
+	TArray<FTile> ReachableSafe(const FTile A, const bool Safe) const;
+	TArray<FTile> ViableBombSpots(const FTile A, const int32 BombPower) const;
+	TArray<FTile> AStar(const FTile A, const FTile B, const int32 SafeCost, const int32 DangerCost) const;
+	TArray<FTile> BombAStar(const FTile A, const FTile B, const int32 BombPower) const;
 };
-
-inline bool operator<(FPathFindStep const& A, FPathFindStep const& B)
-{
-	return A.Cost > B.Cost;
-}
 
 UCLASS(BlueprintType)
 class BOXBLASTERS_API URobotUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+
 public:
 	UFUNCTION(BlueprintPure)
-	static FMaybeTile Dijkstra(const APopulatedArena* Arena, const FTile From, const FTile To, const int32 NormalCost, const int32 WarningCost);
+	static FMaybeTile FindPathTo(const ABomber* Bomber, const FTile Goal, const int32 SafeCost, const int32 DangerCost);
 	UFUNCTION(BlueprintPure)
-	static bool IsWarningAt(const AArena* Arena, const FTile Tile);
+	static FMaybeTile BombToReach(const ABomber* Bomber, const FTile Goal, const int32 BombPower);
 	UFUNCTION(BlueprintPure)
-	static bool IsBlockedAt(const AArena* Arena, const FTile Tile);
+	static bool IsTileSafe(const ABomber* Bomber, const FTile A);
 	UFUNCTION(BlueprintPure)
-	static int32 GetDistance(const FTile From, const FTile To);
+	static bool IsTileBlocked(const ABomber* Bomber, const FTile A);
 	UFUNCTION(BlueprintPure)
-	static TArray<FTile> FindBoxes(const AArena* Arena, const bool IncludeWhite, const bool IncludeRed, const bool IncludeGreen, const bool IncludeBlue);
-	UFUNCTION(BlueprintPure)
-	static EBombType GetBombType(const AArena* Arena, const FTile Target);
-	UFUNCTION(BlueprintPure)
-	static TArray<FTile> GetReachableTiles(const APopulatedArena* Arena, const FTile From, const bool Safe);
-	UFUNCTION(BlueprintPure)
-	static FMaybeTile GetNearestTile(const FTile From, const TArray<FTile>& To);
-	UFUNCTION(BlueprintPure)
-	static TArray<FTile> BombSpotsToHit(const ABomber* Bomber, const FTile Target);
-	UFUNCTION(BlueprintPure)
-	static TArray<FTile> GetPotentialBombEscapes(const ABomber* Bomber, const FTile Target);
-	UFUNCTION(BlueprintPure)
-	static TArray<FTile> GetCurrentBombEscapes(const ABomber* Bomber);
-	UFUNCTION(BlueprintPure)
-	static bool CanReachTile(const ABomber* Bomber, const FTile Target, const bool Safe);
+	static bool IsTileReachable(const ABomber* Bomber, const FTile A, const bool Safe);
 };

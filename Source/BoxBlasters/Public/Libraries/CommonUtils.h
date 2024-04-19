@@ -97,6 +97,13 @@ inline FTile operator*(const FTile Tile, const int32 Number)
 	return {Number * Tile.X, Number * Tile.Y};
 }
 
+inline int32 TileDistance(const FTile A, const FTile B)
+{
+	if (A.X == B.X && A.X % 2 == 1) return 2 + abs(A.Y - B.Y);
+	if (A.Y == B.Y && A.Y % 2 == 1) return 2 + abs(A.X - B.X);
+	return abs(A.X - B.X) + abs(A.Y - B.Y);
+}
+
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
 

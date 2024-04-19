@@ -38,17 +38,3 @@ void APopulatedArena::BeginPlay()
 		}
 	}
 }
-
-bool APopulatedArena::TileHasBomber(const FTile Tile, const int32 Index) const
-{
-	return IsValid(Bombers[Index]) && Bombers[Index]->CurrentTile == Tile;
-}
-
-bool APopulatedArena::TileHasOtherBomber(const FTile Tile, const int32 Index) const
-{
-	for (int i = 0; i < 4; ++i)
-	{
-		if (TileHasBomber(Tile, i) && i != Index) return true;
-	}
-	return false;
-}

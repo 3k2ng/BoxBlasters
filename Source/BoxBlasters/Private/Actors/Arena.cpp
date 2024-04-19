@@ -66,7 +66,7 @@ AArena::AArena()
 	TileMap = DefaultMap();
 	LootMap.Init(ELootType::None, GTotal);
 	BoxInstanceMap.Init(-1, GTotal);
-	WarningMap.Init(false, GTotal);
+	DangerMap.Init(false, GTotal);
 	ExplosionTimerMap.Init(-1.F, GTotal);
 	BombTypeMap.Init(EBombType::None, GTotal);
 	BombPowerMap.Init(0, GTotal);
@@ -171,7 +171,7 @@ void AArena::UpdateWarning()
 	TArray<FTile> WarningTiles;
 	for (int i = 0; i < GTotal; ++i)
 	{
-		WarningMap[i] = false;
+		DangerMap[i] = false;
 		if (BombTypeMap[i] != EBombType::None)
 		{
 			for (const FTile BombedTile : GetBombedTiles(IndexTile(i), BombPowerMap[i]))
@@ -193,7 +193,7 @@ void AArena::UpdateWarning()
 	for (const FTile WarningTile : WarningTiles)
 	{
 		InstancedWarning->AddInstance(FTransform{WarningTile.Location()});
-		WarningMap[WarningTile.Index()] = true;
+		DangerMap[WarningTile.Index()] = true;
 	}
 }
 

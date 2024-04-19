@@ -42,7 +42,7 @@ public:
 	UPROPERTY()
 	TArray<int32> BoxInstanceMap;
 	UPROPERTY()
-	TArray<bool> WarningMap;
+	TArray<bool> DangerMap;
 	UPROPERTY()
 	TArray<float> ExplosionTimerMap;
 	UPROPERTY()
