@@ -182,5 +182,28 @@ void GenerateTiles(TArray<ETileType>& TileMap, TArray<ELootType>& LootMap, const
 			}
 		}
 		break;
+	case ETileGen::Maze:
+		for (int i = 0; i < GTotal; ++i)
+		{
+			const FTile Tile = IndexTile(i);
+			if (!OccupiedTiles.Contains(Tile) && TileMap[i] != ETileType::Wall &&
+				IndexTile(i).X != 0 && IndexTile(i).Y != 6 && IndexTile(i).X != 4 && IndexTile(i).X != 8 && IndexTile(i).X != 12)
+			{
+				TileMap[i] = ETileType::Basic;
+			}
+		}
+		break;
+	case ETileGen::BoxInTheMiddle:
+		for (int i = 0; i < GTotal; ++i)
+		{
+			const FTile Tile = IndexTile(i);
+			if (!OccupiedTiles.Contains(Tile) && TileMap[i] != ETileType::Wall)
+			{
+				TileMap[i] = ETileType::Basic;
+			}
+			TileMap[FTile{4, 4}.Index()] = ETileType::Red;
+			LootMap[FTile{4, 4}.Index()] = ELootType::Upgrade;
+		}
+		break;
 	}
 }
