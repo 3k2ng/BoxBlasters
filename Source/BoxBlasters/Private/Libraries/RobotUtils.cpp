@@ -473,7 +473,7 @@ TArray<FTile> URobotUtils::GetPotentialBombEscapes(const ABomber* Bomber, const 
 	return FStatusMap(Bomber).PlaceBomb(BombTile, Bomber->Power).ReachableSafe(BombTile, false);
 }
 
-FMaybeTile URobotUtils::GetNearestTile(const ABomber* Bomber, const FTile A, const TArray<FTile>& Bs)
+FMaybeTile URobotUtils::GetNearestTile(const FTile A, const TArray<FTile>& Bs)
 {
 	FMaybeTile NearestTile = FMaybeTile::None();
 	int32 LeastCost = MAX_int32;
@@ -487,6 +487,42 @@ FMaybeTile URobotUtils::GetNearestTile(const ABomber* Bomber, const FTile A, con
 		}
 	}
 	return NearestTile;
+}
+
+FMaybeTile URobotUtils::GetLeastCostTile(const ABomber* Bomber, const FTile A, const TArray<FTile>& Bs,
+	const int32 SafeCost, const int32 DangerCost)
+{
+	const FStatusMap StatusMap(Bomber);
+	FMaybeTile LeastCostTile = FMaybeTile::None();
+	int32 LeastCost = MAX_int32;
+	for (const FTile B : Bs)
+	{
+		const int32 CurrentCost = StatusMap.WalkCost(A, B, SafeCost, DangerCost);
+		if (LeastCost > CurrentCost)
+		{
+			LeastCostTile = FMaybeTile::Just(B);
+			LeastCost = CurrentCost;
+		}
+	}
+	return LeastCostTile;
+}
+
+FMaybeTile URobotUtils::GetLeastCostEscape(const ABomber* Bomber, const FTile BombTile, const int32 SafeCost,
+	const int32 DangerCost)
+{
+	const FStatusMap StatusMap = FStatusMap(Bomber).PlaceBomb(BombTile, Bomber->Power);
+	FMaybeTile LeastCostEscape = FMaybeTile::None();
+	int32 LeastCost = MAX_int32;
+	for (const FTile Escape : StatusMap.ReachableSafe(BombTile, false))
+	{
+		const int32 CurrentCost = StatusMap.WalkCost(BombTile, Escape, SafeCost, DangerCost);
+		if (LeastCost > CurrentCost)
+		{
+			LeastCostEscape = FMaybeTile::Just(Escape);
+			LeastCost = CurrentCost;
+		}
+	}
+	return LeastCostEscape;
 }
 
 TArray<FTile> URobotUtils::GetBombSpotToHit(const ABomber* Bomber, const FTile A)

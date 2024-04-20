@@ -9,6 +9,7 @@
 UENUM(BlueprintType)
 enum class ERobotPhase : uint8
 {
+	Decide UMETA(DisplayName = "Decide"),
 	Escape UMETA(DisplayName = "Escape"),
 	Gather UMETA(DisplayName = "Gather"),
 	Eliminate UMETA(DisplayName = "Eliminate"),

@@ -97,7 +97,11 @@ public:
 	UFUNCTION(BlueprintPure)
 	static TArray<FTile> GetPotentialBombEscapes(const ABomber* Bomber, const FTile BombTile);
 	UFUNCTION(BlueprintPure)
-	static FMaybeTile GetNearestTile(const ABomber* Bomber, const FTile A, const TArray<FTile>& Bs);
+	static FMaybeTile GetNearestTile(const FTile A, const TArray<FTile>& Bs);
+	UFUNCTION(BlueprintPure)
+	static FMaybeTile GetLeastCostTile(const ABomber* Bomber, const FTile A, const TArray<FTile>& Bs, const int32 SafeCost, const int32 DangerCost);
+	UFUNCTION(BlueprintPure)
+	static FMaybeTile GetLeastCostEscape(const ABomber* Bomber, const FTile BombTile, const int32 SafeCost, const int32 DangerCost);
 	UFUNCTION(BlueprintPure)
 	static TArray<FTile> GetBombSpotToHit(const ABomber* Bomber, const FTile A);
 	UFUNCTION(BlueprintPure)
