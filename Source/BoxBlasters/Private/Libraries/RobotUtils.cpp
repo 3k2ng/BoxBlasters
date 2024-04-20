@@ -136,14 +136,15 @@ int32 FStatusMap::WalkCost(const FTile A, const FTile B, const int32 SafeCost, c
 struct FAStarNode
 {
 	FTile Tile;
+	int32 Heuristic;
 	int32 Cost;
 
-	FAStarNode(const FTile A, const int32 InCost) : Tile(A), Cost(InCost)
+	FAStarNode(const FTile A, const int32 InHeuristic, const int32 InCost) : Tile(A), Heuristic(InHeuristic), Cost(InCost)
 	{
 	}
 };
 
-inline bool operator<(const FAStarNode& A, const FAStarNode& B) { return A.Cost > B.Cost; }
+inline bool operator<(const FAStarNode& A, const FAStarNode& B) { return A.Heuristic > B.Heuristic; }
 
 TArray<FTile> FStatusMap::AStar(const FTile A, const FTile B, const int32 SafeCost, const int32 DangerCost,
                                 const int32 Weight) const
@@ -157,13 +158,12 @@ TArray<FTile> FStatusMap::AStar(const FTile A, const FTile B, const int32 SafeCo
 	TArray<int32> Cost;
 	Cost.Init(MAX_int32, GTotal);
 	std::priority_queue<FAStarNode> ToVisit;
-	ToVisit.emplace(A, TileDistance(A, B) * Weight);
+	ToVisit.emplace(A, TileDistance(A, B) * Weight, 0);
+	Cost[A.Index()] = 0;
 	while (!ToVisit.empty())
 	{
 		FAStarNode Current = ToVisit.top();
 		ToVisit.pop();
-		if (Current.Cost >= Cost[Current.Tile.Index()]) continue;
-		Cost[Current.Tile.Index()] = Current.Cost;
 		if (Current.Tile == B)
 		{
 			TArray<FTile> ReversedPath;
@@ -184,12 +184,12 @@ TArray<FTile> FStatusMap::AStar(const FTile A, const FTile B, const int32 SafeCo
 		{
 			if (!IsBlocked(Neighbor))
 			{
-				int32 NewCost = Current.Cost + (IsSafe(Neighbor) ? SafeCost : DangerCost) + TileDistance(
-					Current.Tile, B) * Weight;
+				const int32 NewCost = Current.Cost + (IsSafe(Neighbor) ? SafeCost : DangerCost);
 				if (NewCost < Cost[Neighbor.Index()])
 				{
+					Cost[Neighbor.Index()] = NewCost;
 					Parent[Neighbor.Index()] = Current.Tile;
-					ToVisit.emplace(Neighbor, NewCost);
+					ToVisit.emplace(Neighbor, NewCost + TileDistance(Neighbor, B) * Weight, NewCost);
 				}
 			}
 		}
@@ -202,13 +202,15 @@ struct FBombAStarNode
 	FStatusMap StatusMap;
 	TArray<bool> Bombed;
 	TArray<FTile> Bombs;
+	int32 Heuristic;
 	int32 Cost;
 
 	FBombAStarNode(const FStatusMap& InSM, const TArray<bool>& InBombed, const TArray<FTile>& InBombs,
-	               const int32 InCost) :
+	               const int32 InHeuristic, const int32 InCost) :
 		StatusMap(InSM),
 		Bombed(InBombed),
 		Bombs(InBombs),
+		Heuristic(InHeuristic),
 		Cost(InCost)
 	{
 	}
@@ -231,14 +233,15 @@ struct FBombAStarNode
 				StatusMap.PlaceBomb(BombTile, BombPower).DetonateBomb(BombTile),
 				Bombed,
 				TArray<FTile>{BombTile},
-				BombCost + BestScore * Weight
+				BombCost + BestScore * Weight,
+				BombCost
 			);
 		}
 		return InitStates;
 	};
 };
 
-inline bool operator<(const FBombAStarNode& A, const FBombAStarNode& B) { return A.Cost > B.Cost; }
+inline bool operator<(const FBombAStarNode& A, const FBombAStarNode& B) { return A.Heuristic > B.Heuristic; }
 
 TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 BombPower, const int32 BombCost,
                                     const int32 Weight) const
@@ -250,16 +253,16 @@ TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 Bo
 	std::priority_queue<FBombAStarNode> ToVisit;
 	for (const FBombAStarNode InitState : FBombAStarNode::Init(*this, A, B, BombPower, BombCost, Weight))
 	{
+		const FTile InitTile = InitState.Bombs.Last();
+		const bool InitIsSecond = InitState.Bombed[InitTile.Index()];
+		Cost[InitIsSecond ? 1 : 0][InitState.Bombs.Last().Index()] = InitState.Cost;
 		ToVisit.push(InitState);
 	}
 	while (!ToVisit.empty())
 	{
 		const FBombAStarNode Current = ToVisit.top();
 		const FTile CurrentTile = Current.Bombs.Last();
-		const bool CurrentIsSecond = Current.Bombed[CurrentTile.Index()];
 		ToVisit.pop();
-		if (Current.Cost >= Cost[CurrentIsSecond ? 1 : 0][Current.Bombs.Last().Index()]) continue;
-		Cost[CurrentIsSecond ? 1 : 0][Current.Bombs.Last().Index()] = Current.Cost;
 		if (Current.StatusMap.ReachableTiles(A, false).Contains(B))
 		{
 			return Current.Bombs;
@@ -275,15 +278,17 @@ TArray<FTile> FStatusMap::BombAStar(const FTile A, const FTile B, const int32 Bo
 				if (BestScore > CurrentScore) BestScore = CurrentScore;
 			}
 			const bool NextIsSecond = Current.Bombed[BombTile.Index()];
-			int32 NextCost = Current.Cost + BombCost + BestScore * Weight;
+			const int32 NextCost = Current.Cost + BombCost;
 			TArray<FTile> NextBombs = Current.Bombs;
 			NextBombs.Emplace(BombTile);
 			if (NextCost < Cost[NextIsSecond ? 1 : 0][BombTile.Index()])
 			{
+				Cost[NextIsSecond ? 1 : 0][BombTile.Index()] = NextCost;
 				ToVisit.emplace(
 					Current.StatusMap.PlaceBomb(BombTile, BombPower).DetonateBomb(BombTile),
 					NextBombed,
 					NextBombs,
+					NextCost + BestScore * Weight,
 					NextCost
 				);
 			}
